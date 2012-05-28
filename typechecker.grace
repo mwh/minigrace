@@ -117,7 +117,7 @@ def BlockType = ast.asttype("Block", [
     ast.astmethodtype("apply", [ast.signaturePart.new("apply")], TopOther),
     ast.astmethodtype("match", [ast.signaturePart.new("match")], TopOther)
 ])
-def outerMethod = ast.astmethodtype("outer", [], DynamicType)
+def outerMethod = ast.astmethodtype("outer", [ast.signaturePart.new("outer")], DynamicType)
 var currentReturnType := false
 
 class Binding { kind' ->
