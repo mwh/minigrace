@@ -465,7 +465,7 @@ method prefixop {
         postfixsquare
         val := values.pop
         var mem := ast.astmember("prefix" ++ op, val)
-        var call := ast.astcall(mem, [])
+        var call := ast.astcall(mem, [ast.callWithPart.new(mem.value)])
         values.push(call)
     }
 }
@@ -755,7 +755,9 @@ method callrest {
     var methn
     var tmp
     var ln := false
-    var params := []
+    var signature := []
+    var part := ast.callWithPart.new
+    signature.push(part)
     var hadcall := false
     var tok := lastToken
     var startInd := minIndentLevel
@@ -763,6 +765,7 @@ method callrest {
         tok := sym
         hadcall := true
         methn := meth.value
+        part.name := methn
         next
         ifConsume {expression} then {
             // For matching blocks - same as below
@@ -778,7 +781,7 @@ method callrest {
             }
             while {accept("comma")} do {
                 tmp := values.pop
-                params.push(tmp)
+                part.args.push(tmp)
                 next
                 expectConsume {expression}
                 // For matching blocks - same as above
@@ -794,7 +797,7 @@ method callrest {
                 }
             }
             tmp := values.pop
-            params.push(tmp)
+            part.args.push(tmp)
         }
         expect("rparen")
         ln := linenum
@@ -806,10 +809,11 @@ method callrest {
         tok := sym
         hadcall := true
         methn := meth.value
+        part.name := methn
         ln := linenum
         term
         var ar := values.pop
-        params.push(ar)
+        part.args.push(ar)
     } elseif (meth.kind == "identifier") then {
         values.push(meth)
     } elseif (meth.kind == "member") then {
@@ -830,7 +834,7 @@ method callrest {
     if (hadcall) then {
         if (accept("identifier")onLineOfLastOr(tok)) then {
             // Multi-part method name
-            methn := callmprest(ast.astidentifier(methn, false), params, tok)
+            methn := callmprest(ast.astidentifier(methn, false), signature, tok)
             if (meth.kind == "member") then {
                 // callmprest loses this information, so restore
                 // the member lookup (for x.between(3)and(10)-type
@@ -840,7 +844,7 @@ method callrest {
                 meth := methn
             }
         }
-        tmp := ast.astcall(meth, params)
+        tmp := ast.astcall(meth, signature)
         values.push(tmp)
     }
     minIndentLevel := startInd
@@ -850,20 +854,22 @@ method callrest {
 // Process the rest of a multi-part method name. Returns an identifier
 // to replace the one passed in, in which each word is joined by "",
 // and updates params in place.
-method callmprest(meth, params, tok) {
+method callmprest(meth, signature, tok) {
     var methname := meth.value
     var nxt
     var ln := linenum
-    var lastparamcount := 0
+    var part
     while {accept("identifier")onLineOf(tok)
            | accept("identifier")onLineOf(lastToken)} do {
         // Each word must start on the same line as the preceding parameter
         // ended.
+        part := ast.callWithPart.new
+        signature.push(part)
         methname := methname ++ "()"
-        lastparamcount := params.size
         pushidentifier
         nxt := values.pop
         methname := methname ++ nxt.value
+        part.name := nxt.value
         var isTerm := false
         if ((accept("lparen")).not & (accept("lbrace")).not
             & accept("string").not & accept("num").not) then {
@@ -886,13 +892,13 @@ method callmprest(meth, params, tok) {
             expression
             while {accept("comma")} do {
                 nxt := values.pop
-                params.push(nxt)
+                part.args.push(nxt)
                 next
                 expectConsume {expression}
             }
         }
         nxt := values.pop
-        params.push(nxt)
+        part.args.push(nxt)
         if (isTerm.not) then {
             expect("rparen")
         }
@@ -1022,7 +1028,8 @@ method doobject {
                 }
                 next
             }
-            superclass := ast.astcall(ast.astmember(mn.value, nm), scargs)
+            superclass := ast.astcall(ast.astmember(mn.value, nm),
+                [ast.callWithPart.new(mn.value, scargs)])
         }
         expect("lbrace")
         values.push(object {
@@ -1085,67 +1092,9 @@ method doclass {
         }
         def cname = values.pop
         next
-        expect("identifier")
-        pushidentifier
-        var constructorName := values.pop
-        def cparams = []
-        if (accept("lparen")) then {
-            next
-            while {accept("identifier")} do {
-                pushidentifier
-                var pid := values.pop
-                if (accept("colon")) then {
-                    next
-                    dotyperef
-                    pid.dtype := values.pop
-                }
-                cparams.push(pid)
-                if (accept("comma")) then {
-                    next
-                } elseif (accept("rparen")) then {
-                    // Pass
-                } else {
-                    util.syntax_error("expected comma or ) in parameter list")
-                }
-            }
-            expect("rparen")
-            next
-        }
-        if (accept("identifier")) then {
-            var constructorNameStr := constructorName.value
-            while {accept("identifier")} do {
-                pushidentifier
-                constructorNameStr := constructorNameStr ++ "()" ++
-                    values.pop.value
-                expect("lparen")
-                next
-                while {!accept("rparen")} do {
-                    pushidentifier
-                    var pid2 := values.pop
-                    if (accept("colon")) then {
-                        next
-                        dotyperef
-                        pid2.dtype := values.pop
-                    }
-                    cparams.push(pid2)
-                    if (accept("comma")) then {
-                        next
-                    } else {
-                        if (!accept("rparen")) then {
-                            util.syntax_error("expected comma or )")
-                        }
-                    }
-                }
-                expect("rparen")
-                next
-            }
-            constructorName := ast.astidentifier(constructorNameStr, false)
-        }
-        if (accept("arrow")) then {
-            next
-            dotyperef
-            values.pop
-        }
+        var s := methodsignature(false)
+        var csig := s.sig
+        var constructorName := s.m
         if (!accept("lbrace")) then {
             util.syntax_error("class declaration without body")
         }
@@ -1168,7 +1117,7 @@ method doclass {
             }
         }
         next
-        var o := ast.astclass(cname, cparams, body, false, constructorName)
+        var o := ast.astclass(cname, csig, body, false, constructorName)
         values.push(o)
         minIndentLevel := localMinIndentLevel
     }
@@ -1202,7 +1151,8 @@ method doclassOld {
                 }
                 next
             }
-            superclass := ast.astcall(ast.astmember(mn.value, nm), scargs)
+            superclass := ast.astcall(ast.astmember(mn.value, nm),
+                [ast.callWithPart.new(mn.value, scargs)])
         }
         var cname := values.pop
         if (accept("lbrace")) then {
@@ -1268,8 +1218,8 @@ method doclassOld {
                 var p := rbody.pop
                 body.push(p)
             }
-            var o := ast.astclass(cname, params, body, superclass,
-                ast.astidentifier("new", false))
+            var o := ast.astclass(cname, [ast.signaturePart.new(cname.value, params)],
+                body, superclass, ast.astidentifier("new", false))
             values.push(o)
         } else {
             util.syntax_error("class definition without body")
@@ -1278,145 +1228,17 @@ method doclassOld {
     }
 }
 
-// Process the declaration of a multi-part method name. These follow
-// mostly the same rules as calls, but aren't strictly enforced to be on
-// a single line (because they are ended by "{" or "->"). This method
-// returns a replacement method name identifier and modifies params in
-// place.
-method parsempmndecrest(tm) {
-    var methname := tm.value.value
-    def params = tm.params
-    var lastparamcount := 0
-    var nxt
-    var varargs := false
-    while {accept("identifier")} do {
-        if (varargs) then {
-            util.syntax_error("varargs parameter must be last.")
-        }
-        methname := methname ++ "()"
-        lastparamcount := params.size
-        pushidentifier
-        nxt := values.pop
-        methname := methname ++ nxt.value
-        if ((accept("lparen")).not) then {
-            util.syntax_error("multi-part method name parameters require ().")
-        }
-        next
-        while {accept("identifier")
-                | (accept("op") & (sym.value == "*"))} do {
-            if (varargs) then {
-                util.syntax_error("varargs parameter must be last.")
-            }
-            if (accept("op")) then {
-                next
-                varargs := true
-                expect("identifier")
-            }
-            pushidentifier
-            nxt := values.pop
-            if (accept("colon")) then {
-                next
-                pushidentifier
-                var tp := values.pop
-                nxt.dtype := tp
-            }
-            if (varargs) then {
-                tm.vararg := nxt
-                tm.varargs := true
-                expect("rparen")
-            } else {
-                params.push(nxt)
-            }
-            if (accept("comma")) then {
-                next
-            }
-        }
-        expect("rparen")
-        next
-    }
-    ast.astidentifier(methname, false)
-}
-
 // Accept a method declaration
 method methoddec {
     if (accept("keyword") & (sym.value == "method")) then {
         checkIndent
         var stok := sym
         next
-        expect("identifier")or("op")or("lsquare")
-        pushidentifier
-        var meth := values.pop
-        if (accept("rsquare") && {meth.value == "["}) then {
-            meth.value := meth.value ++ "]"
-            next
-        }
-        if (accept("bind")) then {
-            next
-            meth.value := meth.value ++ ":="
-        } elseif (accept("op") & (meth.value == "prefix")) then {
-            meth.value := meth.value ++ sym.value
-            next
-        }
-        var rparams := []
-        var params := []
-        var dtype := false
-        var varargs := false
-        var vararg := false
-        if (accept("lparen")) then {
-            next
-            var id
-            while {accept("identifier") |
-                    (accept("op") & (sym.value == "*"))} do {
-                // Parse the parameter list, including optional dtype
-                // annotations.
-                if (accept("op")) then {
-                    next
-                    varargs := true
-                }
-                pushidentifier
-                id := values.pop
-                dtype := false
-                if (accept("colon")) then {
-                    next
-                    if (accept("identifier")) then {
-                        dotyperef
-                        dtype := values.pop
-                    } else {
-                        util.syntax_error("expected type after :.")
-                    }
-                }
-                id.dtype := dtype
-                if (varargs) then {
-                    vararg := id
-                    expect("rparen")
-                } else {
-                    params.push(id)
-                }
-                if (accept("comma")) then {
-                    next
-                } elseif ((accept("rparen")).not) then {
-                    util.syntax_error("expected comma or rparen.")
-                }
-            }
-            expect("rparen")
-            next
-            if (accept("identifier")) then {
-                // The presence of an identifier here means
-                // a multi-part method name.
-                var tm := ast.astmethod(meth, params, [], false)
-                meth := parsempmndecrest(tm)
-                varargs := tm.varargs
-                vararg := tm.vararg
-            }
-        }
-        if (accept("arrow")) then {
-            // Return dtype
-            next
-            dotyperef
-            dtype := values.pop
-        } else {
-            dtype := false
-        }
+        var m := methodsignature(false)
+        var meth := m.m
+        var signature := m.sig
+        var dtype := m.rtype
+        var varargs := m.v
         var body := []
         var localMin
         if (accept("lbrace")) then {
@@ -1452,13 +1274,157 @@ method methoddec {
             util.syntax_error("No body in method declaration for " ++
                 meth.value)
         }
-        var o := ast.astmethod(meth, params, body, dtype)
+        var o := ast.astmethod(meth, signature, body, dtype)
         if (varargs) then {
             o.varargs := true
-            o.vararg := vararg
         }
         values.push(o)
     }
+}
+
+// Process the declaration of a multi-part method name. These follow
+// mostly the same rules as calls, but aren't strictly enforced to be on
+// a single line (because they are ended by "{" or "->"). This method
+// returns a replacement method name identifier and modifies params in
+// place.
+method parsempmndecrest(tm) {
+    var methname := tm.value.value
+    var signature := tm.signature
+    var nxt
+    while {accept("identifier")} do {
+        methname := methname ++ "()"
+        var part := ast.signaturePart.new
+        pushidentifier
+        nxt := values.pop
+        methname := methname ++ nxt.value
+        part.name := nxt.value
+        var vararg := false
+        if ((accept("lparen")).not) then {
+            util.syntax_error("multi-part method name parameters require ().")
+        }
+        next
+        while {accept("identifier")
+                | (accept("op") & (sym.value == "*"))} do {
+            if (vararg) then {
+                util.syntax_error("varargs parameter must be last.")
+            }
+            if (accept("op")) then {
+                next
+                vararg := true
+                expect("identifier")
+            }
+            pushidentifier
+            nxt := values.pop
+            if (accept("colon")) then {
+                next
+                pushidentifier
+                var tp := values.pop
+                nxt.dtype := tp
+            }
+            if (vararg) then {
+                part.vararg := nxt
+                tm.varargs := true
+                expect("rparen")
+            } else {
+                part.params.push(nxt)
+            }
+            if (accept("comma")) then {
+                next
+            }
+        }
+        expect("rparen")
+        next
+        signature.push(part)
+    }
+    ast.astidentifier(methname, false)
+}
+
+// Accept a method signature
+method methodsignature(sameline) {
+    expect("identifier")or("op")or("lsquare")
+    pushidentifier
+    var meth := values.pop
+    var signature := []
+    var part := ast.signaturePart.new(meth.value)
+    signature.push(part)
+    if (meth.value == "[") then {
+        expect("rsquare")
+        next
+        meth.value := "[]"
+    }
+    if (accept("bind")) then {
+        next
+        meth.value := meth.value ++ ":="
+    } elseif (accept("op") & (meth.value == "prefix")) then {
+        meth.value := meth.value ++ sym.value
+        next
+    }
+    var dtype := false
+    var varargs := false
+    var vararg := false
+    if (accept("lparen")) then {
+        next
+        var id
+        while {accept("identifier") |
+                (accept("op") & (sym.value == "*"))} do {
+            // Parse the parameter list, including optional dtype
+            // annotations.
+            if (accept("op")) then {
+                next
+                vararg := true
+                varargs := true
+            }
+            pushidentifier
+            id := values.pop
+            dtype := false
+            if (accept("colon")) then {
+                next
+                if (accept("identifier")) then {
+                    dotyperef
+                    dtype := values.pop
+                } else {
+                    util.syntax_error("expected type after :.")
+                }
+            }
+            id.dtype := dtype
+            if (vararg) then {
+                part.vararg := id
+                expect("rparen")
+            } else {
+                part.params.push(id)
+            }
+            if (accept("comma")) then {
+                next
+            } elseif ((accept("rparen")).not) then {
+                util.syntax_error("expected comma or rparen.")
+            }
+        }
+        expect("rparen")
+        next
+        if ((!sameline & accept("identifier")) |
+            acceptSameLine("identifier")) then {
+            // The presence of an identifier here means
+            // a multi-part method name.
+            var tm := ast.astmethod(meth, signature, [], false)
+            meth := parsempmndecrest(tm)
+            varargs := varargs | tm.varargs
+        }
+    }
+    if (accept("arrow")) then {
+        // Return dtype
+        next
+        dotyperef
+        dtype := values.pop
+    } else {
+        dtype := false
+    }
+    var o := object {
+        var m := meth
+        var sig := signature
+        var rtype := dtype
+        var v := varargs
+    }
+    o
 }
 
 // Accept an import statement. import takes a single identifier
@@ -1492,59 +1458,23 @@ method doreturn {
 }
 
 method domethodtype {
-    expect("identifier")or("op")or("lsquare")
-    pushidentifier
-    var id := values.pop
-    var mn := id.value
-    if (mn == "[") then {
-        expect("rsquare")
-        next
-        mn := "[]"
+    var m := methodsignature(true)
+    var meth := m.m
+    var signature := m.sig
+    var dtype := m.rtype
+    var varargs := m.v
+    if (dtype == false) then {
+        dtype := ast.astidentifier("Unit", false)
     }
-    if (accept("bind")) then {
-        mn := "{mn}:="
-    }
-    var rtype := ast.astidentifier("Unit", false)
-    var params := []
-    var lastparamcount := 0
-    while {accept("lparen")} do {
-        next
-        while {accept("identifier")} do {
-            pushidentifier
-            var prm := values.pop
-            if (accept("colon")) then {
-                next
-                dotyperef
-                var tp := values.pop
-                prm.dtype := tp
-            }
-            params.push(prm)
-            if (accept("comma")) then {
-                next
-            }
-        }
-        expect("rparen")
-        next
-        if (acceptSameLine("identifier")) then {
-            pushidentifier
-            mn := "{mn}(){values.pop.value}"
-            lastparamcount := params.size
-        }
-    }
-    if (accept("arrow")) then {
-        next
-        expect("identifier")
-        dotyperef
-        rtype := values.pop
-    }
-    values.push(ast.astmethodtype(mn, params, rtype))
+    var o := ast.astmethodtype(meth.value, signature, dtype)
+    values.push(o)
     if (accept("semicolon")) then {
         next
     } else {
         if (!accept("rbrace")) then {
-            if (id.line == sym.line) then {
+            if (meth.line == sym.line) then {
                 util.syntax_error("multiple methods on same line in type, "
-                    ++ "after {mn}")
+                    ++ "after {meth.value}")
             }
         }
     }

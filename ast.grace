@@ -152,11 +152,26 @@ method astmatchcase(matchee, cases', elsecase') {
         }
     }
 }
-method astmethodtype(name', params', rtype') {
+method astmethodtype(name', signature', rtype') {
+    // [signature]
+    //     object {
+    //         name := ""
+    //         params := []
+    //         vararg := false/identifier
+    //     }
+    //     object {
+    //         name := ""
+    //         params := []
+    //         vararg := false/identifier
+    //     }
+    //     ...
+    //     object {
+    //         ...
+    //     }
     object {
         def kind = "methodtype"
         def value = name'
-        def params = params'
+        def signature = signature'
         def rtype = rtype'
         def line = util.linenum
         var register := ""
@@ -170,11 +185,18 @@ method astmethodtype(name', params', rtype') {
             if (rtype /= false) then {
                 s := "{s}{spc}Returns:\n  {spc}{rtype.value}\n"
             }
-            s := s ++ spc ++ "Parameters:"
-            for (params) do { mx ->
-                s := s ++ "\n  "++ spc ++ mx.pretty(depth+2)
-                if (mx.dtype /= false) then {
-                    s := "{s} : {mx.dtype.value}"
+            s := "{s}{spc}Signature:"
+            for (signature) do { part ->
+                s := "{s}\n  {spc}Part: {part.name}"
+                s := "{s}\n    {spc}Parameters:"
+                for (part.params) do { p ->
+                    s := "{s}\n      {spc}{p.pretty(depth + 4)}"
+                    if (p.dtype != false) then {
+                        s := "{s} : {p.dtype.value}"
+                    }
+                }
+                if (part.vararg != false) then {
+                    s := "{s}\n    {spc}Vararg: {part.vararg.pretty(depth + 3)}"
                 }
             }
             s
@@ -220,15 +242,29 @@ method asttype(name', methods') {
         }
     }
 }
-method astmethod(name', params', body', dtype') {
+method astmethod(name', signature', body', dtype') {
+    // [signature]
+    //     object {
+    //         name := ""
+    //         params := []
+    //         vararg := false/identifier
+    //     }
+    //     object {
+    //         name := ""
+    //         params := []
+    //         vararg := false/identifier
+    //     }
+    //     ...
+    //     object {
+    //         ...
+    //     }
     object {
         def kind = "method"
         def value = name'
-        def params = params'
+        def signature = signature'
         def body = body'
         var dtype := dtype'
         var varargs := false
-        var vararg := false
         var selfclosure := false
         var register := ""
         def line = util.linenum
@@ -240,9 +276,19 @@ method astmethod(name', params', body', dtype') {
             var s := "Method\n"
             s := s ++ spc ++ "Name: " ++ self.value.pretty(depth+1)
             s := s ++ "\n"
-            s := s ++ spc ++ "Parameters:"
-            for (self.params) do { mx ->
-                s := s ++ "\n  "++ spc ++ mx.pretty(depth+2)
+            s := "{s}{spc}Signature:"
+            for (signature) do { part ->
+                s := "{s}\n  {spc}Part: {part.name}"
+                s := "{s}\n    {spc}Parameters:"
+                for (part.params) do { p ->
+                    s := "{s}\n      {spc}{p.pretty(depth + 4)}"
+                    if (p.dtype != false) then {
+                        s := "{s} : {p.dtype.value}"
+                    }
+                }
+                if (part.vararg != false) then {
+                    s := "{s}\n    {spc}Vararg: {part.vararg.pretty(depth + 3)}"
+                }
             }
             s := s ++ "\n"
             s := s ++ spc ++ "Body:"
@@ -254,6 +300,19 @@ method astmethod(name', params', body', dtype') {
     }
 }
 method astcall(what, with') {
+    // [with]
+    //     object {
+    //         name := ""
+    //         args := []
+    //     }
+    //     object {
+    //         name := ""
+    //         args := []
+    //     }
+    //     ...
+    //     object {
+    //         ...
+    //     }
     object {
         def kind = "call"
         def value = what
@@ -266,24 +325,41 @@ method astcall(what, with') {
                 spc := spc ++ "  "
             }
             var s := "Call\n"
-            s := s ++ spc ++ "Method:\n"
-            s := s ++ "  " ++ spc ++ self.value.pretty(depth+2)
+            s := s ++ spc ++ "Method: {self.value.pretty(depth + 1)}"
             s := s ++ "\n"
-            s := s ++ spc ++ "Parameters:"
-            for (self.with) do { x ->
-                s := s ++ "\n  "++ spc ++ x.pretty(depth+2)
+            s := s ++ spc ++ "Arguments:"
+            for (self.with) do { part ->
+                s := s ++ "\n  " ++ spc ++ "Part: " ++ part.name
+                for (part.args) do { arg ->
+                    s := s ++ "\n    " ++ spc ++ arg.pretty(depth + 3)
+                }
             }
             s
         }
     }
 }
-method astclass(name', params', body', superclass', constructor') {
+method astclass(name', signature', body', superclass', constructor') {
+    // [signature]
+    //     object {
+    //         name := ""
+    //         params := []
+    //         vararg := false/identifier
+    //     }
+    //     object {
+    //         name := ""
+    //         params := []
+    //         vararg := false/identifier
+    //     }
+    //     ...
+    //     object {
+    //         ...
+    //     }
     object {
         def kind = "class"
         def value = body'
         def name = name'
         def constructor = constructor'
-        def params = params'
+        def signature = signature'
         var register := ""
         def line = util.linenum
         def superclass = superclass'
@@ -297,9 +373,20 @@ method astclass(name', params', body', superclass', constructor') {
                 s := s ++ "\n" ++ spc ++ "Superclass:"
                 s := s ++ "\n  " ++ spc ++ self.superclass.pretty(depth + 2)
             }
-            s := s ++ "\n" ++ spc ++ "Parameters:"
-            for (self.params) do {x->
-                s := s ++ "\n  " ++ spc ++ x.pretty(depth+2)
+            s := s ++ "\n"
+            s := "{s}{spc}Signature:"
+            for (signature) do { part ->
+                s := "{s}\n  {spc}Part: {part.name}"
+                s := "{s}\n    {spc}Parameters:"
+                for (part.params) do { p ->
+                    s := "{s}\n      {spc}{p.pretty(depth + 4)}"
+                    if (p.dtype != false) then {
+                        s := "{s} : {p.dtype.value}"
+                    }
+                }
+                if (part.vararg != false) then {
+                    s := "{s}\n    {spc}Vararg: {part.vararg.pretty(depth + 3)}"
+                }
             }
             s := s ++ "\n" ++ spc ++ "Body:"
             for (self.value) do { x ->
@@ -605,6 +692,59 @@ method astinherits(expr) {
             s := s ++ "\n"
             s := s ++ spc ++ self.value.pretty(depth + 1)
             s
+        }
+    }
+}
+
+method signaturePart {
+    object {
+        method new(*values) {
+            object {
+                var name := ""
+                var params := []
+                var vararg := false
+                if (values.size > 0) then {
+                    name := values[1]
+                }
+                if (values.size > 1) then {
+                    params := values[2]
+                }
+                if (values.size > 2) then {
+                    vararg := values[3]
+                }
+            }
+        }
+    }
+}
+
+// class signaturePart.new(*values) {
+//     var name := ""
+//     var params := []
+//     var vararg := false
+//     if (values.size > 0) then {
+//         name := values[1]
+//     }
+//     if (values.size > 1) then {
+//         params := values[2]
+//     }
+//     if (values.size > 2) then {
+//         vararg := values[3]
+//     }
+// }
+
+method callWithPart {
+    object {
+        method new(*values) {
+            object {
+                var name := ""
+                var args := []
+                if (values.size > 0) then {
+                    name := values[1]
+                }
+                if (values.size > 1) then {
+                    args := values[2]
+                }
+            }
         }
     }
 }
