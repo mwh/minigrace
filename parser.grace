@@ -651,7 +651,7 @@ method matchcase {
             expect("rparen")
             next
         } else {
-            util.syntax_error("No argument to case.")
+            util.syntax_error("No argument to else.")
         }
         elsecase := values.pop
     }
