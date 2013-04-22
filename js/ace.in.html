@@ -7,6 +7,13 @@
         var editor = ace.edit("code_txt_real");
         var GraceMode = require("ace/mode/grace").Mode;
         editor.getSession().setMode(new GraceMode());
+        editor.setBehavioursEnabled(false);
+        editor.setHighlightActiveLine(true);
+        editor.setShowFoldWidgets(false);
+        editor.setShowPrintMargin(false);
+        editor.getSession().setUseSoftTabs(true);
+        editor.getSession().setTabSize(4);
+
         stdin.methods.read = function() {
             return new GraceString(editor.getValue());
         }
