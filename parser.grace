@@ -1025,7 +1025,7 @@ method callmprest(meth, signature, tok) {
         var isTerm := false
         if ((accept("lparen")).not && (accept("lbrace")).not
             && accept("string").not && accept("num").not) then {
-            util.syntax_error("Multi-part method name parameters require '.'.")
+            util.syntax_error("Multi-part method name parameters require ().")
         }
         if (accept("lbrace")onLineOfLastOr(tok)
             || accept("string")onLineOfLastOr(tok)
