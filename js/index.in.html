@@ -3,122 +3,55 @@
  <head>
      <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
      <title>Minigrace JavaScript backend</title>
+     <script src="minigrace.js" type="text/javascript"></script>
+     <script src="samples.js"></script>
      <script type="text/javascript">
-         var ace;
-         var goldenOutput = "";
-         var goldenOutputOffset = 0;
-         var compileError = false;
-         var passes = 0;
-         function compile() {
+        var ace;
+        var goldenOutput = "";
+        var goldenOutputOffset = 0;
+
+        // Overwritten by ace library if present.
+        var getCode = function() {
+            return document.getElementById('code_txt').value;
+        }
+
+        // Setup stderr.
+        minigrace.stderr_write = function(value) {
+            var stderr = document.getElementById("stderr_txt");
+            stderr.value += value;
+            stderr.scrollTop = stderr.scrollHeight;
+        };
+
+        // Setup stdin.
+        minigrace.stdin_read = function() {
+            return prompt("Input: ");
+        }
+
+        // Setup stdout.
+        minigrace.stdout_write = function(value) {
+            var stdout = document.getElementById("stdout_txt");
+            stdout.value += value;
+            scrollstdout();
+        };
+
+        function go() {
             if (document.getElementById('mode').value == 'testall') {
                 document.getElementById('mode').selectedIndex = 0;
                 modeswitch();
                 testall();
                 return;
             }
-            importedModules = {};
-            callStack = [];
-            stdout_txt = document.getElementById("js_txt");
-            stdin_txt = document.getElementById("code_txt");
-            stderr_txt = document.getElementById("stderr_txt");
-            stderr_txt.value = "";
-            stdout_txt.value = "";
-            compileError = false;
-            extensionsMap = callmethod(var_HashMap, "new", [0])
-            var vis = document.getElementById('defaultVisibility').value;
-            if (vis == "standard") {
-                // Do nothing
-            } else if (vis == "methodspublic") {
-                callmethod(extensionsMap, "put", [2], new GraceString("DefaultVisibility"), new GraceString("confidential"));
-                callmethod(extensionsMap, "put", [2], new GraceString("DefaultMethodVisibility"), new GraceString("public"));
-            } else {
-                callmethod(extensionsMap, "put", [2], new GraceString("DefaultVisibility"), new GraceString(vis));
-            }
-            try {
-                gracecode_compiler.call(Grace_allocModule(":user:"));
-            } catch (e) {
-                if (e == "ErrorExit") {
-                    compileError = true;
-                } else if (e == "SystemExit") {
-                    // pass
-                } else if (e.exctype == 'graceexception') {
-                    stderr_txt.value += "Internal compiler error, around line " + e.lineNumber
-                        + ": " + e.exception.name + ": "
-                        + e.message._value + "\n";
-                    for (i=e.callStack.length-1; i>=0; i--) {
-                        stderr_txt.value += "  From call to " + e.callStack[i] + "\n";
-                    }
-                } else {
-                    throw e;
-                }
-            }
-         }
-        function run() {
-            importedModules = {};
-            callStack = [];
-            stdout_txt = document.getElementById("stdout_txt");
-            stdin_txt = document.getElementById("stdout_txt");
-            stderr_txt = document.getElementById("stderr_txt");
-            var code = document.getElementById("js_txt").value;
-            lineNumber = 1;
-            eval(code);
-            var mod = document.getElementById('modname').value;
-            var theModule;
-            eval("theModule = gracecode_" + mod + ";");
-            window['gracecode_' + mod] = theModule;
-            testpass = false;
-            try {
-                theModule.call({methods:{}, data: {}, className: document.getElementById('modname').value});
-            } catch (e) {
-                if (e.exctype == 'graceexception') {
-                    stderr_txt.value += "Error around line " + e.lineNumber
-                        + ": " + e.exception.name + ": "
-                        + e.message._value + "\n";
-                    for (i=e.callStack.length-1; i>=0; i--) {
-                        stderr_txt.value += "  From call to " + e.callStack[i] + "\n";
-                    }
-                    if (e.callStack.length > 0) {
-                        stderr_txt.value += "Error around line " + e.lineNumber
-                            + ": " + e.exception.name + ": "
-                            + e.message._value + "\n";
-                    }
-                    stderr_txt.scrollTop = stderr_txt.scrollHeight;
-                } else if (e != "SystemExit") {
-                    stderr_txt.value += "Runtime error around line " + lineNumber + "\n";
-                    throw e;
-                }
-            }
-            if (goldenOutput != "") {
-                var realOut = stdout_txt.value.substr(goldenOutputOffset);
-                if (realOut == goldenOutput) {
-                    stderr_txt.value += "\nTest passed.";
-                    passes = passes + 1;
-                } else {
-                    stderr_txt.value += "\nTest failed.";
-                }
-                stderr_txt.scrollTop = stderr_txt.scrollHeight;
-                goldenOutput = "";
-                setTimeout("stdout_txt.style.background = ''", 2500);
-            }
+            document.getElementById('stderr_txt').value = "";
+            minigrace.modname = document.getElementById('modname').value;
+            minigrace.compilerun(getCode());
+            document.getElementById('js_txt').value = minigrace.generated_output;
             scrollstdout();
         }
-        function compilerun() {
-            document.getElementById('stderr_txt').value = "";
-            if (document.getElementById('mode').value == 'testall') {
-                document.getElementById('mode').selectedIndex = 0;
-                modeswitch();
-                testall();
-                return;
-            }
-            compile();
-            if (!compileError &&
-                   document.getElementById('mode').value == 'js') {
-                run();
-            }
-        }
+
         function loadtest(testname) {
             document.getElementById('stderr_txt').value = "";
             document.getElementById('defaultVisibility').selectedIndex = 2;
+            selectvisibility();
             var req = new XMLHttpRequest();
             req.open("GET", "./tests/" + testname + "_test.grace", false);
             req.send(null);
@@ -127,6 +60,7 @@
                     editor.setValue(req.responseText, -1);
                 document.getElementById("code_txt").value = req.responseText;
                 document.getElementById("modname").value = testname;
+                minigrace.modname = testname;
             }
             if (testname.indexOf("_fail") == -1) {
                 req.open("GET", "./tests/" + testname + ".out", false);
@@ -140,17 +74,21 @@
                 document.getElementById("stdout_txt").value = "Expected result: syntax error.\n=================================\n";
             }
         }
+
         function modeswitch() {
-            var compilerun_but = document.getElementById("compilerun_but");
-            var mode = document.getElementById('mode');
-            if (mode.value != 'js' && mode.value != 'testall') {
+            var mode = document.getElementById('mode').value;
+            if (mode != 'js' && mode != 'testall') {
                 document.getElementById('tab').selectedIndex = 1;
                 tabswitch();
             }
+            if (mode != 'testall') {
+                minigrace.mode = mode;
+            }
         }
+
         function testall() {
             var tc = document.getElementById('testcases');
-            passes = 0;
+            var passes = 0;
             var tests = 0;
             var failures = [];
             var idx = 0;
@@ -167,13 +105,27 @@
                     var et = (new Date).getTime();
                     fetchTime += (et - st);
                     var op = passes;
+                    document.getElementById('stderr_txt').value = "";
                     st = (new Date).getTime();
-                    compile();
+                    minigrace.compile(getCode());
                     et = (new Date).getTime();
                     compileTime += (et - st);
+                    document.getElementById('js_txt').value = minigrace.generated_output;
                     st = (new Date).getTime();
-                    if (!compileError) {
-                        run();
+                    if (!minigrace.compileError) {
+                        minigrace.run();
+                        if (goldenOutput != "") {
+                            var realOut = stdout_txt.value.substr(goldenOutputOffset);
+                            if (realOut == goldenOutput) {
+                                stderr_txt.value += "\nTest passed.";
+                                passes = passes + 1;
+                            } else {
+                                stderr_txt.value += "\nTest failed.";
+                            }
+                            stderr_txt.scrollTop = stderr_txt.scrollHeight;
+                            goldenOutput = "";
+                            setTimeout("stdout_txt.style.background = ''", 2500);
+                        }
                     }
                     et = (new Date).getTime();
                     runTime += (et - st);
@@ -213,6 +165,7 @@
             }
             testnext();
         }
+
         function tabswitch() {
             var tb = document.getElementById('tabbox');
             var next = document.getElementById('tab').value;
@@ -227,14 +180,20 @@
             }
             document.getElementById('stdout_options').style.display = (next == "stdout_tab" ? 'block' : 'none');
         }
+
         function clearstdout() {
             document.getElementById("stdout_txt").value = "";
         }
+
         function scrollstdout() {
             if(document.getElementById("autoscroll").checked) {
                 var stdout = document.getElementById("stdout_txt");
                 stdout.scrollTop = stdout.scrollHeight;
             }
+        }
+
+        function selectvisibility() {
+            minigrace.vis = document.getElementById("defaultVisibility").value;
         }
      </script>
  </head>
@@ -264,7 +223,7 @@
   <textarea id="stderr_txt" rows="9" cols="60"></textarea>
  </div>
  <br />
- <input type="button" id="compilerun_but" value="Go" onclick="compilerun()" />
+ <input type="button" id="compilerun_but" value="Go" onclick="go()" />
  Target:
  <select id="mode" onchange="modeswitch()">
   <option value="js" />JavaScript
@@ -283,7 +242,7 @@
  <input type="button" value="Load sample:" onclick="loadsample(document.getElementById('sample').value)" />
  <select id="sample"><!--Will be populated dynamically//--></select>
  Visibility:
- <select id="defaultVisibility">
+ <select id="defaultVisibility" onchange="selectvisibility();">
   <option value="standard">Standard
   <option value="confidential">Confidential
   <option value="public">All accessible
@@ -296,20 +255,6 @@ minigrace-js
  <!--[!SH[git rev-parse HEAD|cut -b1-7]!]-->
 </span>
  <br />
- <script src="gracelib.js" type="text/javascript"></script>
- <script src="StandardPrelude.js" type="text/javascript"></script>
- <script src="compiler.js"></script>
- <script src="lexer.js"></script>
- <script src="ast.js"></script>
- <script src="parser.js"></script>
- <script src="genc.js"></script>
- <script src="genjs.js"></script>
- <script src="buildinfo.js"></script>
- <script src="identifierresolution.js"></script>
- <script src="mgcollections.js"></script>
- <script src="xmodule.js"></script>
- <script src="samples.js"></script>
- <script src="unicodedata.js"></script>
  <style type="text/css">
      #code_txt_real {
          position: relative;
