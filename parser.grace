@@ -1405,8 +1405,8 @@ method doclassOld {
         }
         var cname := values.pop
         if (cname.kind != "generic") then {
-            util.warning("old class syntax: should be 'class {cname.value}.new'"
-                ++ " or other factory method name")
+            util.warning("Old class syntax: should be 'class {cname.value}.new'"
+                ++ " or other factory method name.\n")
         }
         if (accept("lbrace")) then {
             values.push(object {
