@@ -651,7 +651,7 @@ method matchcase {
             expect("rparen")
             next
         } else {
-            util.syntax_error("No argument to case.")
+            util.syntax_error("No argument to else.")
         }
         elsecase := values.pop
     }
@@ -1025,7 +1025,7 @@ method callmprest(meth, signature, tok) {
         var isTerm := false
         if ((accept("lparen")).not && (accept("lbrace")).not
             && accept("string").not && accept("num").not) then {
-            util.syntax_error("Multi-part method name parameters require '.'.")
+            util.syntax_error("Multi-part method name parameters require ().")
         }
         if (accept("lbrace")onLineOfLastOr(tok)
             || accept("string")onLineOfLastOr(tok)
@@ -1405,8 +1405,8 @@ method doclassOld {
         }
         var cname := values.pop
         if (cname.kind != "generic") then {
-            util.warning("old class syntax: should be 'class {cname.value}.new'"
-                ++ " or other factory method name")
+            util.warning("Old class syntax: should be 'class {cname.value}.new'"
+                ++ " or other factory method name.\n")
         }
         if (accept("lbrace")) then {
             values.push(object {
@@ -1919,10 +1919,12 @@ method statement {
         if (sym.line == lastToken.line) then {
             if (sym.kind != "rbrace") then {
                 util.setPosition(sym.line, sym.linePos)
-                if ((values.last.kind == "identifier").orElse {
-                        values.last.kind == "member"
-                    }.andAlso {
-                        sym.kind == "identifier"
+                if ((values.size > 0).andAlso {
+                        (values.last.kind == "identifier").orElse {
+                            values.last.kind == "member"
+                        }.andAlso {
+                            sym.kind == "identifier"
+                        }
                     }) then {
                     util.syntax_error("Unexpected token after statement ended; "
                         ++ "got {sym.kind}: '{sym.value}', expected "
