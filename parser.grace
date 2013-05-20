@@ -514,7 +514,7 @@ method prefixop {
             expect("rparen")
             next
         } else {
-            term
+            expectConsume {term}
         }
         dotrest
         callrest
@@ -557,7 +557,7 @@ method catchcase {
     } else {
         expect "lparen"
         next
-        expression
+        expectConsume {expression}
         expect "rparen"
         next
     }
@@ -674,21 +674,24 @@ method term {
 // (dotrest), postcircumfix square brackets, the rest of a method call,
 // or an operator expression.
 method expression {
+    var sz := values.size
     if (accept("lparen")) then {
         def tmpStatementToken = statementToken
         statementToken := sym
         next
-        expression
+        expectConsume {expression}
         expect("rparen")
         statementToken := tmpStatementToken
         next
     } else {
         term
     }
-    dotrest
-    callrest
-    postfixsquare
-    expressionrest
+    if (values.size > sz) then {
+        dotrest
+        callrest
+        postfixsquare
+        expressionrest
+    }
 }
 
 // Accept postcircumfix square brackets (as in x[y]) and replace the
@@ -697,7 +700,7 @@ method postfixsquare {
     if (acceptSameLine("lsquare")) then {
         next
         var expr := values.pop
-        expression
+        expectConsume {expression}
         var index := values.pop
         expect("rsquare")
         next
@@ -1635,6 +1638,7 @@ method methodsignature(sameline) {
             // annotations.
             if (accept("op")) then {
                 next
+                expect "identifier"
                 vararg := true
                 varargs := true
             }
