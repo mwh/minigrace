@@ -1352,6 +1352,7 @@ method doclass {
         var s := methodsignature(false)
         var csig := s.sig
         var constructorName := s.m
+        def anns = doannotation
         if (!accept("lbrace")) then {
             util.syntax_error("Class declaration without body.")
         }
@@ -1377,6 +1378,14 @@ method doclass {
         util.setline(btok.line)
         var o := ast.classNode.new(cname, csig, body, false, constructorName)
         o.generics := s.generics
+        if (false != anns) then {
+            o.annotations.extend(anns)
+        } else {
+            if (defaultMethodVisibility == "confidential") then {
+                o.annotations.push(ast.identifierNode.new("confidential",
+                    false))
+            }
+        }
         values.push(o)
         minIndentLevel := localMinIndentLevel
     }
