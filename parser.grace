@@ -126,7 +126,8 @@ method expectConsume(ablock) {
     var sz := tokens.size
     ablock.apply
     if (tokens.size == sz) then {
-        util.syntax_error("Unable to consume token.")
+        util.setPosition(sym.line, sym.linePos)
+        util.syntax_error("Unable to consume token: {sym.kind}: '{sym.value}'.")
     }
 }
 // Expect block to consume at least one token, or report string error
@@ -134,6 +135,7 @@ method expectConsume(ablock)error(msg) {
     var sz := tokens.size
     ablock.apply
     if (tokens.size == sz) then {
+        util.setPosition(sym.line, sym.linePos)
         util.syntax_error("Unable to consume token: {msg}.")
     }
 }
@@ -429,7 +431,7 @@ method doif {
                     minIndentLevel := minInd
                 }
                 while {(accept("rbrace")).not} do {
-                    statement
+                    expectConsume {statement}
                     v := values.pop
                     body.push(v)
                 }
@@ -462,7 +464,7 @@ method doif {
                     minIndentLevel := minInd
                 }
                 while {(accept("rbrace")).not} do {
-                    statement
+                    expectConsume {statement}
                     v := values.pop
                     ebody.push(v)
                 }
@@ -488,7 +490,7 @@ method doif {
                         minIndentLevel := minInd
                     }
                     while {(accept("rbrace")).not} do {
-                        statement
+                        expectConsume {statement}
                         v := values.pop
                         curelse.push(v)
                     }
