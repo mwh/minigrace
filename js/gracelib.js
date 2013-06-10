@@ -631,6 +631,11 @@ function Grace_print(obj) {
     return var_nothing;
 }
 
+function Grace_prompt(obj) {
+    var s = callmethod(obj, "asString", [0]);
+    return new GraceString(prompt(s._value));
+}
+
 function Grace_length(obj) {
     return new GraceNum(obj._value.length);
 }
@@ -935,6 +940,9 @@ stdout.methods.close = function() {};
 
 var stdin = Grace_allocObject();
 stdin.methods.read = function() {
+    return new GraceString(minigrace.stdin_read());
+}
+stdin.methods.getline = function() {
     return new GraceString(minigrace.stdin_read());
 }
 stdin.methods.iterator = function() {
