@@ -620,8 +620,14 @@ function Grace_egal(o1, o2) {
 }
 
 function Grace_print(obj) {
-    var s = callmethod(obj, "asString", [0]);
-    minigrace.stdout_write(s._value + "\n");
+    var sp = " ";
+    for (var i = 0; i < arguments.length; i++) {
+        if (i == arguments.length - 1)
+            sp = "";
+        var s = callmethod(arguments[i], "asString", [0]);
+        minigrace.stdout_write(s._value + sp);
+    }
+    minigrace.stdout_write("\n");
     return var_nothing;
 }
 
