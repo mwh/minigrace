@@ -366,14 +366,14 @@ GraceList.prototype = {
             for (var i=0; i<this._value.length; i++) {
                 var v = this._value[i];
                 if (v.methods["asString"])
-                    s += callmethod(v, "asString", [0])._value + ", ";
+                    s += callmethod(v, "asString", [0])._value + ",";
                 else {
                     var q = dbgp(v, 2);
                     s += "((" + q + ")), "
                 }
             }
             s += "]";
-            return new GraceString(s.replace(", ]", "]"));
+            return new GraceString(s.replace(",]", "]"));
         },
         "contains": function(argcv, other) {
             for (var i=0; i<this._value.length; i++) {
@@ -458,7 +458,7 @@ GracePrimitiveArray.prototype = {
             for (var i=0; i<this._value.length; i++) {
                 var v = this._value[i];
                 if (v.methods["asString"])
-                    s += callmethod(v, "asString", [0])._value + ", ";
+                    s += callmethod(v, "asString", [0])._value + ",";
                 else {
                     var q = dbgp(v, 2);
                     s += "((" + q + ")), "
@@ -620,9 +620,20 @@ function Grace_egal(o1, o2) {
 }
 
 function Grace_print(obj) {
-    var s = callmethod(obj, "asString", [0]);
-    minigrace.stdout_write(s._value + "\n");
+    var sp = " ";
+    for (var i = 0; i < arguments.length; i++) {
+        if (i == arguments.length - 1)
+            sp = "";
+        var s = callmethod(arguments[i], "asString", [0]);
+        minigrace.stdout_write(s._value + sp);
+    }
+    minigrace.stdout_write("\n");
     return var_nothing;
+}
+
+function Grace_prompt(obj) {
+    var s = callmethod(obj, "asString", [0]);
+    return new GraceString(prompt(s._value));
 }
 
 function Grace_length(obj) {
@@ -929,6 +940,9 @@ stdout.methods.close = function() {};
 
 var stdin = Grace_allocObject();
 stdin.methods.read = function() {
+    return new GraceString(minigrace.stdin_read());
+}
+stdin.methods.getline = function() {
     return new GraceString(minigrace.stdin_read());
 }
 stdin.methods.iterator = function() {

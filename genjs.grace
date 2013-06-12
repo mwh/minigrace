@@ -1019,8 +1019,14 @@ method compilenode(o) {
             }
             if(args.size == 0) then {
                 out("  var call" ++ auto_count ++ " = Grace_print(new GraceString(\"\"));")
-            } else {
+            } elseif(args.size == 1) then {
                 out("  var call" ++ auto_count ++ " = Grace_print(" ++ args.first ++ ");")
+            } else {
+                var varargs := args.first
+                for (2..args.size) do { i ->
+                    varargs := varargs ++ ", " ++ args[i]
+                }
+                out("  var call" ++ auto_count ++ " = Grace_print(" ++ varargs ++ ");")
             }
             o.register := "call" ++ auto_count
             auto_count := auto_count + 1

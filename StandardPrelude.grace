@@ -3,6 +3,8 @@
 inherits _prelude
 var isStandardPrelude := true
 
+import "io" as io
+
 class SuccessfulMatch.new(result', bindings') {
     inherits true
     def result = result'
@@ -130,4 +132,9 @@ def BasicGrace = object {
 }
 method new {
     _prelude.clone(self)
+}
+
+method prompt(promptString) {
+    io.output.write(promptString ++ " ")
+    io.input.getline
 }
