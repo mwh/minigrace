@@ -366,14 +366,14 @@ GraceList.prototype = {
             for (var i=0; i<this._value.length; i++) {
                 var v = this._value[i];
                 if (v.methods["asString"])
-                    s += callmethod(v, "asString", [0])._value + ", ";
+                    s += callmethod(v, "asString", [0])._value + ",";
                 else {
                     var q = dbgp(v, 2);
                     s += "((" + q + ")), "
                 }
             }
             s += "]";
-            return new GraceString(s.replace(", ]", "]"));
+            return new GraceString(s.replace(",]", "]"));
         },
         "contains": function(argcv, other) {
             for (var i=0; i<this._value.length; i++) {
@@ -458,7 +458,7 @@ GracePrimitiveArray.prototype = {
             for (var i=0; i<this._value.length; i++) {
                 var v = this._value[i];
                 if (v.methods["asString"])
-                    s += callmethod(v, "asString", [0])._value + ", ";
+                    s += callmethod(v, "asString", [0])._value + ",";
                 else {
                     var q = dbgp(v, 2);
                     s += "((" + q + ")), "
