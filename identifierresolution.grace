@@ -647,6 +647,20 @@ method resolveIdentifiers(topNode) {
                 }
             }
         }
+        if ((node.kind == "vardec").andAlso({node.value != false})) then {
+            if (node.value.kind == "object") then {
+                scope.elementScopes.put(node.name.value, node.value.data)
+            } else {
+                def sc = findDeepScope(node.value)
+                scope.elementScopes.put(node.name.value, sc)
+            }
+            if (ast.findAnnotation(node, "parent")) then {
+                def sc = findDeepScope(node.value)
+                for (sc.elements) do {m->
+                    scope.add(m)
+                }
+            }
+        }
     }
 }
 
