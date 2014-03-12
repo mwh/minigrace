@@ -1890,7 +1890,7 @@ method checkimport(nm, line, isDialect) {
                     cmd := "cd {location} && "++cmd
                 }
                 var process := spawnSubprocess(nm, cmd, [nm ++ ".gcn", nm, line])
-                if(isDialect) then {
+                if(isDialect || util.dynamicModule) then {
                     // We must wait for the .gso to be built before
                     // we try to run loadDynamic on it. Block here.
                     process.wait
@@ -1898,7 +1898,7 @@ method checkimport(nm, line, isDialect) {
                 }
                 //addTransitiveImports("{location}{nm}.gso", nm, line)
             }
-            if (!util.importDynamic && !isDialect) then {
+            if (!util.importDynamic && !isDialect && !util.dynamicModule) then {
                 linkfiles.push("{location}{nm}.gcn")
                 staticmodules.add(nm)
             }
