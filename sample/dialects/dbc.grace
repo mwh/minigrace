@@ -4,11 +4,11 @@ def IllegalArguments = Exception.refine "IllegalArguments"
 type Predicate = { apply -> Boolean } 
 
 method assert( condition : Predicate ) {
- if (!condition.apply) then { InvariantFailure.raise } 
+ if (!condition.apply) then { InvariantFailure.raise "assertion failed" }
 }
 
 method assume( condition : Predicate ) {
- if (!condition.apply) then { InvariantFailure.raise } 
+ if (!condition.apply) then { InvariantFailure.raise "assumption failed" }
 }
 
 method require( precondition : Predicate ) 
