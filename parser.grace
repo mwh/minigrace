@@ -566,6 +566,7 @@ method block {
         minIndentLevel := minInd - 1
         statementIndent := startIndent
         next
+        util.setline(btok.line)
         var o := ast.blockNode.new(params, body)
         if (isMatchingBlock) then {
             if (params.size > 0) then {
@@ -3433,7 +3434,6 @@ method checkUnexpectedTokenAfterStatement {
                         suggestion := errormessages.suggestion.new
                         suggestion.replaceToken(sym)leading(true)trailing(false)with("({sym.value}")
                         suggestion.append ")" onLine(sym.line)
-                            onLine(sym.line)
                         suggestions.push(suggestion)
                     }
                 }

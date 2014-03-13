@@ -1,3 +1,4 @@
+.DS_Store
 *.s
 *.o
 *.bc
@@ -20,7 +21,23 @@ unicodegen.py
 misc
 tests/test.log
 buildinfo.grace
+js/.DS_Store
 js/index.html
+js/StandardPrelude.js
+js/minigrace.js
+js/ast.js
+js/buildinfo.js
+js/compiler.js
+js/errormessages.js
+js/genc.js
+js/genjs.js
+js/genjson.js
+js/identifierresolution.js
+js/lexer.js
+js/mgcollections.js
+js/minigrace.js
+js/parser.js
+js/xmodule.js
 .git-generation-cache
 c/*.c
 c/*.grace
@@ -37,3 +54,8 @@ java/*.grace
 stdin_minigrace
 java/grace/lib/StandardPrelude.java
 java/grace/lib/StandardPrelude.grace
+minigrace.xcodeproj
+minigrace.xcodeproj/*
+minigrace.xcworkspace
+minigrace.xcworkspace/*
+.gitignore~

@@ -9,7 +9,7 @@ import "mirrors" as mirrors
 import "errormessages" as errormessages
 
 var tmp
-var indent := ""
+var indent:String := ""
 var verbosity := 30
 var pad1 := 1
 var auto_count := 0
@@ -33,6 +33,9 @@ def topLevelTypes = mgcollections.map.new
 var dialectHasAtModuleEnd := false
 var dialectHasAtModuleStart := false
 var debugMode := false
+var priorLineSeen := 0
+var priorLineComment := ""
+var priorLineEmitted := 0
 
 method increaseindent() {
     indent := indent ++ "  "
@@ -58,9 +61,34 @@ method formatModname(name) {
     snm
 }
 
+method noteLineNumber(n)comment(c) {
+    // remember the current line number, so that it can be generated if needed
+    priorLineSeen := n
+    priorLineComment := c
+}
+
+method forceLineNumber(n)comment(c) {
+    // force the generation of code that sets the line number.  
+    // Used at the start of a method
+    noteLineNumber(n)comment(c)
+    output.push "{indent}setLineNumber({priorLineSeen})    // {priorLineComment};"
+    priorLineEmitted := priorLineSeen
+}
+
 method out(s) {
+    // output code, but first output code to set the line number
+    if (priorLineSeen != priorLineEmitted) then {
+        output.push "{indent}setLineNumber({priorLineSeen})    // {priorLineComment};"
+        priorLineEmitted := priorLineSeen
+    }
     output.push(indent ++ s)
 }
+
+method outUnnumbered(s) {
+    // output code that does not correspond to any source line
+    output.push(indent ++ s)
+}
+
 method outprint(s) {
     util.outprint(s)
 }
@@ -117,7 +145,7 @@ method compilearray(o) {
         r := compilenode(a)
         vals.push(r)
     }
-    out("var array" ++ myc ++ " = new GraceList([")
+    out("  var array" ++ myc ++ " = new GraceList([")
     increaseindent
     for (vals) do {v->
         out(v ++ ",")
@@ -138,12 +166,11 @@ method compileobjouter(selfr, outerRef) {
     auto_count := auto_count + 1
     var nm := escapestring("outer")
     var nmi := escapeident("outer")
-    out(selfr ++ ".outer = " ++ outerRef ++ ";")
+    out("{selfr}.outer = {outerRef};")
     out("var reader_" ++ modname ++ "_" ++ nmi ++ myc ++ " = function() \{")
     out("  return this.outer;")
     out("\}")
-    out(selfr ++ ".methods[\"" ++ nm ++ "\"] = reader_" ++ modname ++
-        "_" ++ nmi ++ myc ++ ";")
+    out("{selfr}.methods[\"{nm}\"] = reader_{modname}_{nmi}{myc};")
 }
 method compileobjtype(o, selfr, pos) {
     var val := "undefined"
@@ -154,15 +181,15 @@ method compileobjtype(o, selfr, pos) {
     o.anonymous := true
     val := compilenode(o)
     out(selfr ++ ".data[\"" ++ nm ++ "\"] = " ++ val ++ ";")
-    out("var reader_" ++ modname ++ "_" ++ nmi ++ myc ++ " = function() \{")
-    out("  return this.data[\"" ++ nm ++ "\"];")
-    out("\}")
-    out("reader_{modname}_{nmi}{myc}.def = true;")
+    out("    var reader_" ++ modname ++ "_" ++ nmi ++ myc ++ " = function() \{")
+    out("    return this.data[\"" ++ nm ++ "\"];")
+    out("  \}")
+    out("  reader_{modname}_{nmi}{myc}.def = true;")
     var isReadable := false
     for (o.annotations) do {ann->
         if ((ann.kind == "identifier").andAlso
             {ann.value == "confidential"}) then {
-            out("reader_{modname}_{nmi}{myc}.confidential = true;")
+            out("  reader_{modname}_{nmi}{myc}.confidential = true;")
         }
     }
     out(selfr ++ ".methods[\"" ++ nm ++ "\"] = reader_" ++ modname ++
@@ -183,10 +210,10 @@ method compileobjdefdec(o, selfr, pos) {
     var nm := escapestring(o.name.value)
     var nmi := escapeident(o.name.value)
     out(selfr ++ ".data[\"" ++ nm ++ "\"] = " ++ val ++ ";")
-    out("var reader_" ++ modname ++ "_" ++ nmi ++ myc ++ " = function() \{")
-    out("  return this.data[\"" ++ nm ++ "\"];")
-    out("\}")
-    out("reader_{modname}_{nmi}{myc}.def = true;")
+    out("    var reader_" ++ modname ++ "_" ++ nmi ++ myc ++ " = function() \{")
+    out("    return this.data[\"" ++ nm ++ "\"];")
+    out("  \}")
+    out("  reader_{modname}_{nmi}{myc}.def = true;")
     var isReadable := false
     for (o.annotations) do {ann->
         if ((ann.kind == "identifier").andAlso
@@ -199,17 +226,16 @@ method compileobjdefdec(o, selfr, pos) {
         }
     }
     if (!isReadable) then {
-        out("reader_{modname}_{nmi}{myc}.confidential = true;")
+        out("  reader_{modname}_{nmi}{myc}.confidential = true;")
     }
     out(selfr ++ ".methods[\"" ++ nm ++ "\"] = reader_" ++ modname ++
         "_" ++ nmi ++ myc ++ ";")
     if (ast.findAnnotation(o, "parent")) then {
-        out("{selfr}.superobj = {val};")
+        out("  {selfr}.superobj = {val};")
     }
-    if (o.dtype != false) then {
+    if (o.dtype.value != "Unknown") then {
         linenum := o.line
-        out "lineNumber = {linenum};"
-        out "moduleName = \"{modname}\";"
+        noteLineNumber(o.line)comment("typecheck in compileobjdefdec")
         out "if (!Grace_isTrue(callmethod({compilenode(o.dtype)}, \"match\","
         out "  [1], {val})))"
         out "    throw new GraceExceptionPacket(TypeErrorObject,"
@@ -261,13 +287,12 @@ method compileobjvardec(o, selfr, pos) {
     if (!isWritable) then {
         out("writer_{modname}_{nmi}{myc}.confidential = true;")
     }
-    if (o.dtype != false) then {
+    if ((o.dtype != false).andAlso{o.dtype.value != "Unknown"}) then {
         if (val == "undefined") then {
             return true
         }
         linenum := o.line
-        out "lineNumber = {linenum};"
-        out "moduleName = \"{modname}\";"
+        noteLineNumber(o.line)comment("typecheck in compileobjvardec")
         out "if (!Grace_isTrue(callmethod({compilenode(o.dtype)}, \"match\","
         out "  [1], {val})))"
         out "    throw new GraceExceptionPacket(TypeErrorObject,"
@@ -313,7 +338,7 @@ method compileobject(o, outerRef, inheritingObject) {
             superobj := e.value
         }
     }
-    out("var " ++ selfr ++ " = Grace_allocObject();")
+    out "var {selfr} = Grace_allocObject();"
     out "{selfr}.definitionModule = \"{modname}\";"
     out "{selfr}.definitionLine = {o.line};"
     if (inheritingObject) then {
@@ -356,13 +381,13 @@ method compileobject(o, outerRef, inheritingObject) {
             compilenode(e)
         }
     }
-    out("superDepth = origSuperDepth;")
+    out "superDepth = origSuperDepth;"
     decreaseindent
-    out("\}")
+    out "\}"
     if (inheritingObject) then {
-        out("obj_init_{myc}.apply(inheritingObject, []);")
+        out "obj_init_{myc}.apply(inheritingObject, []);"
     } else {
-        out("obj_init_{myc}.apply({selfr}, []);")
+        out "obj_init_{myc}.apply({selfr}, []);"
     }
     o.register := selfr
     inBlock := origInBlock
@@ -385,23 +410,22 @@ method compileblock(o) {
     out("\}")
     if (false != o.matchingPattern) then {
         def pat = compilenode(o.matchingPattern)
-        out("block{myc}.pattern = {pat};")
+        out "block{myc}.pattern = {pat};"
     }
     out("block{myc}.methods[\"match\"] = GraceBlock_match;")
     out("block" ++ myc ++ ".receiver = this;")
     out("block{myc}.className = 'block<{modname}:{o.line}>';")
-    out("block" ++ myc ++ ".real = function(")
-    increaseindent
+    var paramList := ""
     var first := true
-    for (o.params) do {p->
-        if (first.not) then {
-            out(",")
+    for (o.params) do { each ->
+        if (first) then {
+            paramList := varf(each.value)
+            first := false
+        } else {
+            paramList := paramList ++ ", " ++ varf(each.value)
         }
-        first := false
-        out(varf(p.value))
     }
-    decreaseindent
-    out(") \{")
+    out("block" ++ myc ++ ".real = function(" ++ paramList ++ ") \{")
     increaseindent
     out("sourceObject = this;")
     var ret := "undefined"
@@ -460,6 +484,16 @@ method compilemethod(o, selfobj) {
         paramCounts.push(part.params.size)
         variableArities.push(part.vararg != false)
     }
+    var textualSignature := ""
+    for (o.signature) do { part ->
+        def size = part.params.size
+        def isVar = part.vararg != false
+        def varChar = if (isVar) then {"+"} else {""}
+        textualSignature := textualSignature ++ part.name
+        if ((size > 0) || (isVar)) then {
+            textualSignature := textualSignature ++ "({size}{varChar})"
+        }
+    }
     usedvars := []
     declaredvars := []
     var myc := auto_count
@@ -479,7 +513,7 @@ method compilemethod(o, selfobj) {
             }
         }
     }
-    out("var func" ++ myc ++ " = function(argcv) \{")
+    out("var func" ++ myc ++ " = function(argcv) \{    // method " ++ textualSignature)
     increaseindent
     out("var curarg = 1;")
     if (debugMode) then {
@@ -488,8 +522,8 @@ method compilemethod(o, selfobj) {
     for (o.signature.indices) do { partnr ->
         var part := o.signature[partnr]
         for (part.params) do { p ->
-            out("var {varf(p.value)} = arguments[curarg];")
-            out("curarg++;")
+            out "var {varf(p.value)} = arguments[curarg];"
+            out "curarg++;"
             if (debugMode) then {
                 out "myframe.addVar(\"{escapestring(p.value)}\","
                 out "  function() \{return {varf(p.value)};});"
@@ -506,10 +540,10 @@ method compilemethod(o, selfobj) {
             }
         } else {
             if (!o.selfclosure) then {
-                out "if (argcv[{partnr - 1}] !=  func{myc}.paramCounts[{partnr - 1}])"
+                out "if (argcv[{partnr - 1}] != {part.params.size})"
                 out("  callmethod(RuntimeErrorObject, \"raise\", [1], new "
-                    ++ "GraceString(\"wrong number of arguments for part "
-                    ++ "{partnr} ({part.name})\"));")
+                    ++ "GraceString(\"wrong number of arguments for list "
+                    ++ "{partnr} of {textualSignature}\"));")
             }
         }
     }
@@ -537,14 +571,13 @@ method compilemethod(o, selfobj) {
                     for (o.generics) do {g->
                         if (p.dtype.value == g.value) then {
                             linenum := o.line
-                            out "lineNumber = {linenum};"
-                            out "moduleName = \"{modname}\";"
+                            noteLineNumber(o.line)comment("generic check in compilemethod")
                             out "if (!Grace_isTrue(callmethod({compilenode(p.dtype)}, \"match\","
                             out "  [1], arguments[curarg2])))"
                             out "    throw new GraceExceptionPacket(TypeErrorObject,"
                             out "          new GraceString(\"expected \""
                             out "           + \"parameter '{p.value}' \""
-                            out "           + \"to be of type {p.dtype.value}\"));";
+                            out "           + \"to be of type {p.dtype.value}\"));"
                         }
                     }
                 }
@@ -561,13 +594,17 @@ method compilemethod(o, selfobj) {
     }
     out("var returnTarget = invocationCount;")
     out("invocationCount++;")
-    out "moduleName = \"{modname}\";"
+    // Setting the location is deliberately delayed to this point, so that
+    // argument checking errors are reported as errors at the request site
+    // --- which is where the error happens.
+    forceLineNumber(linenum)comment("compilemethod")
+    out("setModuleName(\"{modname}\");")
     if (debugMode) then {
         out "stackFrames.push(myframe);"
     }
     out("try \{")
     increaseindent
-    var ret := "var_done"
+    var ret := "GraceDone"
     for (o.body) do { l ->
         ret := compilenode(l)
     }
@@ -596,17 +633,18 @@ method compilemethod(o, selfobj) {
     for (o.annotations) do {ann->
         if ((ann.kind == "identifier").andAlso
             {ann.value == "confidential"}) then {
-            out("func{myc}.confidential = true;")
+            out("  func{myc}.confidential = true;")
         }
     }
     out "func{myc}.paramCounts = ["
     increaseindent
     for (paramCounts) do {p->
-        out("{p},")
+        out("  {p},")
     }
     decreaseindent
     out "];"
     out "func{myc}.variableArities = ["
+    increaseindent
     for (variableArities) do {p->
         if (p) then {
             out "  true,"
@@ -614,12 +652,15 @@ method compilemethod(o, selfobj) {
             out "  false,"
         }
     }
+    decreaseindent
     out "];"
     out("{selfobj}.methods[\"{name}\"] = func{myc};")
     out "func{myc}.definitionLine = {o.line};"
     out "func{myc}.definitionModule = \"{modname}\";"
-    if (o.properties.contains("fresh")) then {
+    if (o.properties.contains "fresh" ) then {
+        increaseindent
         compilefreshmethod(o, selfobj)
+        decreaseindent
     }
 }
 method compilefreshmethod(o, selfobj) {
@@ -719,7 +760,7 @@ method compilemethodtypes(func, o) {
             // We store information for static top-level types only:
             // absent information is treated as Unknown (and unchecked).
             if (false != p.dtype) then {
-                if ((p.dtype.kind == "identifier")
+                if ((p.dtype.kind == "identifier").andAlso{p.dtype.value != "Dynamic"}
                     || (p.dtype.kind == "type")) then {
                     def typeid = escapeident(p.dtype.value)
                     if (topLevelTypes.contains(typeid)) then {
@@ -758,11 +799,11 @@ method compilewhile(o) {
 method compileif(o) {
     var myc := auto_count
     auto_count := auto_count + 1
-    out "var if{myc} = var_done;"
+    outUnnumbered "var if{myc} = GraceDone;"
     out("if (Grace_isTrue(" ++ compilenode(o.value) ++ ")) \{")
+    var tret := "undefined"
+    var fret := "undefined"
     increaseindent
-    var tret := "var_done"
-    var fret := "var_done"
     for (o.thenblock) do { l->
         tret := compilenode(l)
     }
@@ -816,7 +857,7 @@ method compilebind(o) {
         val := compilenode(val)
         var nm := dest.value
         usedvars.push(nm)
-        out(varf(nm) ++ " = " ++ val ++ ";")
+        out "{varf(nm)} = {val};"
         o.register := val
     } elseif (dest.kind == "member") then {
         if (dest.value.substringFrom(dest.value.size - 1)to(dest.value.size)
@@ -854,16 +895,16 @@ method compiledefdec(o) {
         if (ast.findAnnotation(o, "parent")) then {
             out("this.superobj = {val};")
         }
+        out("this.methods[\"{nm}\"].debug = \"def\";")
     }
     if (o.dtype != false) then {
         linenum := o.line
-        out "lineNumber = {linenum};"
-        out "moduleName = \"{modname}\";"
+        noteLineNumber(o.line)comment("compiledefdec")
         out "if (!Grace_isTrue(callmethod({compilenode(o.dtype)}, \"match\","
         out "  [1], {varf(nm)})))"
         out "    throw new GraceExceptionPacket(TypeErrorObject,"
         out "          new GraceString(\"expected \""
-        out "          + \"initial value of def '{snm}' to be of type {o.dtype.value}\"))";
+        out "          + \"initial value of def '{snm}' to be of type {o.dtype.value}\"))"
     }
     o.register := val
 }
@@ -889,12 +930,12 @@ method compilevardec(o) {
         compilenode(ast.methodNode.new(assignID,
             [ast.signaturePart.new(assignID.value, [tmpID])],
             [ast.bindNode.new(o.name, tmpID)], false))
+        out("this.methods[\"{nm}\"].debug = \"var\";")
     }
     if (o.dtype != false) then {
         if (val != "false") then {
             linenum := o.line
-            out "lineNumber = {linenum};"
-            out "moduleName = \"{modname}\";"
+            noteLineNumber(o.line)comment("compilevardec")
             out "if (!Grace_isTrue(callmethod({compilenode(o.dtype)}, \"match\","
             out "  [1], {varf(nm)})))"
             out "    throw new GraceExceptionPacket(TypeErrorObject,"
@@ -926,7 +967,9 @@ method compilecatchcase(o) {
     if (false != o.finally) then {
         finally := compilenode(o.finally)
     }
+    noteLineNumber(o.line)comment("compilecatchcase")
     out("var catchres{myc} = catchCase({mainblock},cases{myc},{finally});")
+    out("setModuleName(\"{modname}\");")
     o.register := "catchres" ++ myc
 }
 method compilematchcase(o) {
@@ -943,7 +986,9 @@ method compilematchcase(o) {
     if (false != o.elsecase) then {
         elsecase := compilenode(o.elsecase)
     }
+    noteLineNumber(o.line)comment("compilematchcase")
     out("var matchres{myc} = matchCase({matchee},cases{myc},{elsecase});")
+    out("setModuleName(\"{modname}\");")
     o.register := "matchres" ++ myc
 }
 method compileop(o) {
@@ -1042,8 +1087,8 @@ method compilecall(o) {
         out(call)
     } elseif ((o.value.kind == "member") && {(o.value.in.kind == "identifier")
         && (o.value.in.value == "prelude")}) then {
-        var call := "var call" ++ auto_count ++ " = callmethod(Grace_prelude"
-            ++ ",\"" ++ escapestring(o.value.value) ++ "\", ["
+        var call := "var call" ++ auto_count ++ " = callmethod(Grace_prelude, \""
+            ++ escapestring(o.value.value) ++ "\", ["
         call := call ++ partl ++ "]"
         for (args) do { arg ->
             call := call ++ ", " ++ arg
@@ -1124,7 +1169,7 @@ method compiledialect(o) {
     out("this.outer = do_import(\"{fn}\", {formatModname(o.value)});")
     out("var Grace_prelude = this.outer;")
     if (dialectHasAtModuleStart) then {
-        out "callmethod(Grace_prelude,\"atModuleStart\", [1], "
+        out "callmethod(Grace_prelude, \"atModuleStart\", [1], "
         out "  new GraceString(\"{escapestring(modname)}\"));"
     }
     o.register := "undefined"
@@ -1144,6 +1189,7 @@ method compileimport(o) {
         out "          new GraceString(\"expected \""
         out "          + \"module {o.value} to be of type {o.dtype.value}\"))";
     }
+    out "setModuleName(\"{modname}\");"
     o.register := "undefined"
 }
 method compilereturn(o) {
@@ -1151,21 +1197,20 @@ method compilereturn(o) {
     if (inBlock) then {
         out("throw new ReturnException(" ++ reg ++ ", returnTarget);")
     } else {
-        out("return " ++ reg)
+        out("  return " ++ reg)
     }
     o.register := "undefined"
 }
 method compilenode(o) {
     compilationDepth := compilationDepth + 1
-    if (linenum != o.line) then {
-        linenum := o.line
-        out("lineNumber = " ++ linenum);
-    }
-    if (o.kind == "num") then {
+    linenum := o.line
+    noteLineNumber(o.line)comment("compilenode {o.kind}")
+    def oKind = o.kind
+    if (oKind == "num") then {
         o.register := "new GraceNum(" ++ o.value ++ ")"
     }
     var l := ""
-    if (o.kind == "string") then {
+    if (oKind == "string") then {
         l := o.value.size
         l := l + 1
         var os := ""
@@ -1175,26 +1220,19 @@ method compilenode(o) {
             ++ os ++ "\");")
         o.register := "string" ++ auto_count
         auto_count := auto_count + 1
-    }
-    if (o.kind == "index") then {
+    } elseif (oKind == "index") then {
         compileindex(o)
-    }
-    if (o.kind == "octets") then {
+    } elseif (oKind == "octets") then {
         compileoctets(o)
-    }
-    if (o.kind == "dialect") then {
+    } elseif (oKind == "dialect") then {
         compiledialect(o)
-    }
-    if (o.kind == "import") then {
+    } elseif (oKind == "import") then {
         compileimport(o)
-    }
-    if (o.kind == "return") then {
+    } elseif (oKind == "return") then {
         compilereturn(o)
-    }
-    if (o.kind == "generic") then {
+    } elseif (oKind == "generic") then {
         o.register := compilenode(o.value)
-    }
-    if ((o.kind == "identifier")
+    } elseif ((oKind == "identifier")
         && ((o.value == "true") || (o.value == "false"))) then {
         var val := 0
         if (o.value == "true") then {
@@ -1203,55 +1241,39 @@ method compilenode(o) {
         out("var bool" ++ auto_count ++ " = new GraceBoolean(" ++ o.value ++ ")")
         o.register := "bool" ++ auto_count
         auto_count := auto_count + 1
-    } elseif (o.kind == "identifier") then {
+    } elseif (oKind == "identifier") then {
         compileidentifier(o)
-    }
-    if (o.kind == "defdec") then {
+    } elseif (oKind == "defdec") then {
         compiledefdec(o)
-    }
-    if (o.kind == "vardec") then {
+    } elseif (oKind == "vardec") then {
         compilevardec(o)
-    }
-    if (o.kind == "block") then {
+    } elseif (oKind == "block") then {
         compileblock(o)
-    }
-    if (o.kind == "method") then {
+    } elseif (oKind == "method") then {
         compilemethod(o, "this")
-    }
-    if (o.kind == "array") then {
+    } elseif (oKind == "array") then {
         compilearray(o)
-    }
-    if (o.kind == "bind") then {
+    } elseif (oKind == "bind") then {
         compilebind(o)
-    }
-    if (o.kind == "while") then {
+    } elseif (oKind == "while") then {
         compilewhile(o)
-    }
-    if (o.kind == "if") then {
+    } elseif (oKind == "if") then {
         compileif(o)
-    }
-    if (o.kind == "catchcase") then {
+    } elseif (oKind == "catchcase") then {
         compilecatchcase(o)
-    }
-    if (o.kind == "matchcase") then {
+    } elseif (oKind == "matchcase") then {
         compilematchcase(o)
-    }
-    if (o.kind == "class") then {
+    } elseif (oKind == "class") then {
         compileclass(o)
-    }
-    if (o.kind == "object") then {
+    } elseif (oKind == "object") then {
         compileobject(o, "this", false)
-    }
-    if (o.kind == "type") then {
+    } elseif (oKind == "type") then {
         compiletype(o)
-    }
-    if (o.kind == "member") then {
+    } elseif (oKind == "member") then {
         compilemember(o)
-    }
-    if (o.kind == "for") then {
+    } elseif (oKind == "for") then {
         compilefor(o)
-    }
-    if ((o.kind == "call")) then {
+    } elseif ((oKind == "call")) then {
         if ((o.value.value == "print") && (o.value.in.value == "prelude")) then {
             var args := []
             for (o.with) do { part ->
@@ -1270,8 +1292,7 @@ method compilenode(o) {
         } else {
             compilecall(o)
         }
-    }
-    if (o.kind == "op") then {
+    } elseif (oKind == "op") then {
         compileop(o)
     }
     compilationDepth := compilationDepth - 1
@@ -1404,6 +1425,9 @@ method compile(vl, of, mn, rm, bt, glpath) {
     util.setline(1)
     out("function {formatModname(modname)} () \{")
     increaseindent
+    out("setModuleName(\"{modname}\");")
+    out("if (callStack.length == 0)")
+    out("  callStack = [\"execution environment\"]")
     if (util.extensions.contains("NativePrelude")) then {
         out("var Grace_prelude = window.Grace_native_prelude;")
     }
@@ -1442,7 +1466,7 @@ method compile(vl, of, mn, rm, bt, glpath) {
         }
     }
     if (dialectHasAtModuleEnd) then {
-        out("callmethod(Grace_prelude,\"atModuleEnd\", [1], this);")
+        out("callmethod(Grace_prelude, \"atModuleEnd\", [1], this);")
     }
     if (debugMode) then {
         out "stackFrames.pop();"
@@ -1471,5 +1495,7 @@ method compile(vl, of, mn, rm, bt, glpath) {
     for (output) do { o ->
         outprint(o)
     }
+    xmodule.writeGCT(modname, modname ++ ".gct")
+        fromValues(values)modules(staticmodules)
     log_verbose("done.")
 }
