@@ -64,7 +64,7 @@ Object module_math_init() {
     add_Method(c, "random", &math_random);
 
     Object o = alloc_newobj(0, c);
-    math_module = 0;
+    math_module = o;
     gc_root(math_module);
 
     return o;
