@@ -689,6 +689,9 @@ method compilefreshmethod(o, selfobj) {
         compileobject(tailObject, "this", true)
         ret := tailObject.register
     }
+    if (false != tailObject) then {
+        o.body.push(tailObject)
+    }
     out("return " ++ ret)
     decreaseindent
     out("\} catch(e) \{")
