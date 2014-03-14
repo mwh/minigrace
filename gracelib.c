@@ -2972,63 +2972,6 @@ void block_savedest(Object self) {
     struct UserObject *uo = (struct UserObject*)self;
     uo->retpoint = (void *)&return_stack[calldepth-1];
 }
-struct TailCallObject {
-    OBJECT_HEADER;
-    Object self;
-    const char *name;
-    int nparts;
-    int *argcv;
-    Object *argv;
-    int superdepth;
-};
-ClassData TailCall = NULL;
-void TailCall__mark(struct TailCallObject *t) {
-    gc_mark(t->self);
-    int i, j;
-    int n = 0;
-    for (i = 0; i < t->nparts; i++) {
-        for (j = 0; j < t->argcv[i]; j++) {
-            gc_mark(t->argv[n]);
-            n++;
-        }
-    }
-}
-void TailCall__release(struct TailCallObject *t) {
-    glfree(t->argv);
-}
-Object tailcall(Object self, const char *name, int nparts, int *argcv,
-        Object *argv, int superdepth) {
-    if (TailCall == NULL) {
-        TailCall = alloc_class3("TailCall", 0, (void*)&TailCall__mark,
-                (void*)&TailCall__release);
-    }
-    struct TailCallObject *o = (struct TailCallObject*)alloc_obj(
-            sizeof(struct TailCallObject) - sizeof(int32_t)
-                - sizeof(ClassData), TailCall);
-    o->flags = 0;
-    o->class = TailCall;
-    o->self = self;
-    o->name = name;
-    o->nparts = nparts;
-    o->argcv = argcv;
-    int i, j;
-    int n = 0;
-    for (i = 0; i < nparts; i++) {
-        for (j = 0; j < argcv[i]; j++) {
-            n++;
-        }
-    }
-    o->argv = glmalloc(sizeof(Object) * n);
-    n = 0;
-    for (i = 0; i < nparts; i++) {
-        for (j = 0; j < argcv[i]; j++) {
-            o->argv[n] = argv[n];
-            n++;
-        }
-    }
-    o->superdepth = superdepth;
-    return (Object)o;
-}
 
 Object sourceObject;
 Method *findmethod(Object *selfp, Object *realselfp, const char *name,
@@ -3113,8 +3056,6 @@ int checkmethodcall(Method *m, int nparts, int *argcv, Object *argv) {
     }
     return 1;
 }
-FILE *callgraph;
-int track_callgraph = 0;
 int callcount = 0;
 int tailcount = 0;
 Object callmethod4(Object self, const char *name,
@@ -3156,19 +3097,11 @@ start:
                 m->definitionLine);
     else
         strcpy(methDesc, "nowhere");
-    sprintf(callstack[calldepth], "%s%s.%s (defined %s%s) at %s:%i", (istail ? "tailcall " : ""),
+    sprintf(callstack[calldepth], "%s.%s (defined %s%s) at %s:%i",
             self->class->name, name, methDesc,
             objDesc,
             modulename,
             linenumber);
-    if (track_callgraph && calldepth > 0) {
-        char tmp[255];
-        char *prev;
-        strcpy(tmp, callstack[calldepth-1]);
-        prev = strtok(tmp, " ");
-        fprintf(callgraph, "\"%s\" -> \"%s.%s\";\n", prev, self->class->name,
-                name);
-    }
     calldepth++;
     if (calldepth == STACK_SIZE) {
         die("Maximum call stack depth exceeded.");
@@ -3202,21 +3135,6 @@ start:
     if (ret != NULL) {
         gc_frame_end(frame);
         debug(" returned %p (%s) from %s on %p", ret, ret->class->name, name, self);
-        if (ret->class == TailCall) {
-            frame = gc_frame_new();
-            gc_frame_newslot(ret);
-            struct TailCallObject *t = (struct TailCallObject*)ret;
-            self = t->self;
-            name = t->name;
-            partc = t->nparts;
-            argcv = t->argcv;
-            argv = t->argv;
-            superdepth = t->superdepth;
-            debug("tailcall to %s on %p (%s)", name, self, self->class->name);
-            istail = 1;
-            tailcount++;
-            goto start;
-        }
         return ret;
     }
     if (m) {
@@ -3304,11 +3222,6 @@ Object callmethod(Object receiver, const char *name,
 Object callmethodself(Object receiver, const char *name,
         int nparts, int *nparamsv, Object *args) {
     return callmethodflags(receiver, name, nparts, nparamsv, args, CFLAG_SELF);
-}
-void enable_callgraph(char *filename) {
-    callgraph = fopen(filename, "w");
-    fprintf(callgraph, "digraph CallGraph {\n");
-    track_callgraph = 1;
 }
 Object MatchFailed;
 Object alloc_MatchFailed() {
@@ -4133,8 +4046,6 @@ Object dlmodule(const char *name) {
 }
 void gracelib_stats() {
     grace_run_shutdown_functions();
-    if (track_callgraph)
-        fprintf(callgraph, "}\n");
     if (getenv("GRACE_STATS") == NULL)
         return;
     fprintf(stderr, "Total objects allocated: %i\n", objectcount);

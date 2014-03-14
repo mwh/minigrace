@@ -256,22 +256,6 @@ method generalError(message, errlinenum, position, arr, spacePos, suggestions) {
     }
 }
 
-method type_error(s) {
-    if (extensionsv.contains("IgnoreTypes")) then {
-        return true
-    }
-    if (vtagv) then {
-        io.error.write("[" ++ vtagv ++ "]")
-    }
-    io.error.write("{modnamev}.grace:{linenumv}:{lineposv}: Type error: {s}")
-    io.error.write("\n")
-    io.error.write(lines.at(linenumv) ++ "\n")
-    if (interactivev.not) then {
-        sys.exit(1)
-    } else {
-        errno := 1
-    }
-}
 method semantic_error(s) {
     if (vtagv) then {
         io.error.write("[" ++ vtagv ++ "]")

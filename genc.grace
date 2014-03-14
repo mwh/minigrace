@@ -45,7 +45,6 @@ var topOutput := []
 var bottomOutput := output
 var compilationDepth := 0
 def topLevelTypes = collections.map.new
-var importHook := false
 var subprocesses := collections.list.new
 var linkfiles := collections.list.new
 var dialectHasAtModuleEnd := false
@@ -752,11 +751,6 @@ method compilemethod(o, selfobj, pos) {
     numslots := numslots + countbindings(o.body)
     definebindings(o.body, slot)
     var tailObj := false
-    var tco := false
-    if ((o.body.size > 0) && {o.body.last.kind == "call"}
-        && {util.extensions.contains("TailCall")}) then {
-        tco := o.body.pop
-    }
     if ((o.body.size > 0).andAlso {o.body.last.kind == "object"}) then {
         tailObj := o.body.pop
     }
@@ -768,10 +762,6 @@ method compilemethod(o, selfobj, pos) {
         out "  inheritingObject = methodInheritingObject;"
         compileobject(tailObj, "self")
         ret := tailObj.register
-    }
-    if (false != tco) then {
-        compilecall(tco, true)
-        ret := tco.register
     }
     out("  gc_frame_end(frame);")
     out("  return {ret};")
@@ -1371,7 +1361,7 @@ method compileop(o) {
         auto_count := auto_count + 1
     }
 }
-method compilecall(o, tailcall) {
+method compilecall(o) {
     def myc = auto_count
     auto_count := auto_count + 1
     var args := []
@@ -1473,13 +1463,8 @@ method compilecall(o, tailcall) {
         for (o.with.indices) do { partnr ->
             out("  partcv[{partnr - 1}] = {o.with[partnr].args.size};")
         }
-        if (tailcall) then {
-            out("  Object call{auto_count} = tailcall({obj}, \"{evl}\",")
-            out("    {nparts}, partcv, params, 0);")
-        } else {
-            out("  Object call{auto_count} = callmethod({obj}, \"{evl}\",")
-            out("    {nparts}, partcv, params);")
-        }
+        out("  Object call{auto_count} = callmethod({obj}, \"{evl}\",")
+        out("    {nparts}, partcv, params);")
     } else {
         obj := "self"
         len := o.value.value.size + 1
@@ -1490,13 +1475,8 @@ method compilecall(o, tailcall) {
         for (o.with.indices) do { partnr ->
             out("  partcv[{partnr - 1}] = {o.with[partnr].args.size};")
         }
-        if (tailcall) then {
-            out("  Object call{auto_count} = tailcall(self, \"{evl}\",")
-            out("    {nparts}, partcv, params, 0);")
-        } else {
-            out("  Object call{auto_count} = callmethod(self, \"{evl}\",")
-            out("    {nparts}, partcv, params);")
-        }
+        out("  Object call{auto_count} = callmethod(self, \"{evl}\",")
+        out("    {nparts}, partcv, params);")
     }
     out("  gc_frame_end(callframe{myc});")
     o.register := "call" ++ auto_count
@@ -1578,19 +1558,6 @@ method compileimport(o) {
     modules.add(nm)
     globals.push("Object {modg};")
     importnames.put(nm, modg)
-    if (false != importHook) then {
-        def res = importHook.processImport(nm)
-        if (false != res) then {
-            for (res.importCode) do {l->
-                out(l)
-            }
-            for (res.globals) do {l->
-                globals.push(l)
-            }
-            out("  *var_{nm} = {res.moduleSymbol};")
-            return true
-        }
-    }
     out("  if ({modg} == NULL)")
     if (staticmodules.contains(o.path)) then {
         out("    {modg} = {modg}_init();")
@@ -1601,15 +1568,7 @@ method compileimport(o) {
     globals.push("Object {modg}_init();")
 }
 method compilereturn(o) {
-    var reg
-    if ((o.value.kind == "call") &&
-        {util.extensions.contains("TailCall")}) then {
-        // Tail-call support
-        compilecall(o.value, true)
-        reg := o.value.register
-    } else {
-        reg := compilenode(o.value)
-    }
+    def reg = compilenode(o.value)
     if (inBlock) then {
         out("  block_return(realself, {reg});")
     } else {
@@ -1747,7 +1706,7 @@ method compilenode(o) {
             o.register := "call" ++ auto_count
             auto_count := auto_count + 1
         } else {
-            compilecall(o, false)
+            compilecall(o)
         }
     }
     if (o.kind == "op") then {
@@ -1813,15 +1772,6 @@ method checkimport(nm, line, isDialect) {
     def argv = sys.argv
     if (staticmodules.contains(nm)) then {
         return true
-    }
-    if (false != importHook) then {
-        def res = importHook.processImport(nm)
-        if (false != res) then {
-            for (res.linkTargets) do {t->
-                staticmodules.push(t)
-            }
-            return true
-        }
     }
     var locationList := collections.list.new
     locationList.push("")
@@ -1932,10 +1882,6 @@ method processImports(values') {
     }
     if (util.runmode == "make") then {
         log_verbose("checking imports.")
-        if (util.extensions.contains("ImportHook")) then {
-            importHook := mirrors.loadDynamicModule(
-                            util.extensions.get "ImportHook")
-        }
         for (values') do { v ->
             if (v.kind == "import") then {
                 var nm := v.path
@@ -2179,16 +2125,7 @@ method compile(vl, of, mn, rm, bt) {
     if (!util.extensions.contains("NoMain")) then {
         out("int main(int argc, char **argv) \{")
         out("  initprofiling();")
-        if (util.extensions.contains("LogCallGraph")) then {
-            var lcgfile := util.extensions.get("LogCallGraph")
-            out("  enable_callgraph(\"{lcgfile}\");")
-        }
-        if (!util.extensions.contains("NativePrelude")) then {
-            //out("  prelude = module_StandardPrelude_init();")
-        }
-        util.runOnNew {
-            out("  setCompilerModulePath(\"{io.realpath(sys.execPath)}\");")
-        } else {}
+        out("  setCompilerModulePath(\"{io.realpath(sys.execPath)}\");")
         if(buildinfo.modulepath != "") then {
             out("  setModulePath(\"{buildinfo.modulepath}\");")
         }
