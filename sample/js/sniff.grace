@@ -20,6 +20,7 @@ var initialised := false
 var backgroundColour := "white"
 def registeredObjects = collections.list.new
 def stepBlocks = collections.list.new
+def audioTags = collections.map.new
 
 var canvasWidth
 var canvasHeight
@@ -340,6 +341,9 @@ method whenever(c)do(b) {
 method hue(h)saturation(s)lightness(l) {
     return "hsl({h}, {s}%, {l}%)"
 }
+method h(h)s(s)l(l) {
+    hue(h)saturation(s)lightness(l)
+}
 method initialise {
     if (initialised) then {
         return false
@@ -387,6 +391,25 @@ method random(n) {
 method randomPoint {
     point.x(canvasWidth / 10 + random(canvasWidth * 0.8))
         y(canvasHeight / 10 + random(canvasHeight * 0.8))
+}
+method playSound(url) {
+    if (audioTags.contains(url)) then {
+        def audio = audioTags.get(url)
+        audio.currentTime := 0
+        audio.play
+    } else {
+        def audio = dom.document.createElement "audio"
+        audioTags.put(url, audio)
+        audio.src := url
+        audio.load
+        audio.play
+    }
+}
+method stopSound(url) {
+    if (audioTags.contains(url)) then {
+        def audio = audioTags.get(url)
+        audio.pause
+    }
 }
 method start {
     initialise
