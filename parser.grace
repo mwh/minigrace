@@ -3437,7 +3437,6 @@ method checkUnexpectedTokenAfterStatement {
                         suggestion := errormessages.suggestion.new
                         suggestion.replaceToken(sym)leading(true)trailing(false)with("({sym.value}")
                         suggestion.append ")" onLine(sym.line)
-                            onLine(sym.line)
                         suggestions.push(suggestion)
                     }
                 }
