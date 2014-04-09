@@ -2514,6 +2514,7 @@ method doobject {
         def localMinIndentLevel = minIndentLevel
         next
         var superclass := false
+        def anns = doannotation
         if(sym.kind != "lbrace") then {
             def suggestion = errormessages.suggestion.new
             def nextTok = findNextToken({ t -> t.kind == "rbrace" })
@@ -2573,6 +2574,9 @@ method doobject {
         }
         util.setline(btok.line)
         var o := ast.objectNode.new(body, superclass)
+        if (false != anns) then {
+            o.annotations.extend(anns)
+        }
         values.push(o)
         minIndentLevel := localMinIndentLevel
     }

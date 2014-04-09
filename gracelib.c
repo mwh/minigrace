@@ -3959,7 +3959,8 @@ void UserObj__release(struct UserObject *o) {
     glfree(o->data);
 }
 Object GraceDefaultObject;
-Object alloc_userobj2(int numMethods, int numFields, ClassData c) {
+Object alloc_userobj3(int numMethods, int numFields, int numAnnotations,
+      ClassData c) {
     if (GraceDefaultObject == NULL) {
         ClassData dc = alloc_class2("DefaultObject", 6,
                 (void*)&UserObj__mark);
@@ -3988,9 +3989,15 @@ Object alloc_userobj2(int numMethods, int numFields, ClassData c) {
     uo->data = glmalloc(sizeof(Object) * numFields);
     for (i=0; i<numFields; i++)
         uo->data[i] = NULL;
+    uo->annotations = numAnnotations > 0 ?
+        glmalloc(sizeof(Object) * numAnnotations) : NULL;
+    uo->numannotations = numAnnotations;
     uo->super = GraceDefaultObject;
     uo->ndata = numFields;
     return o;
+}
+Object alloc_userobj2(int numMethods, int numFields, ClassData c) {
+    return alloc_userobj3(numMethods, numFields, 0, c);
 }
 Object alloc_userobj(int numMethods, int numFields) {
     return alloc_userobj2(numMethods, numFields, NULL);

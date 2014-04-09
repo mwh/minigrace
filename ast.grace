@@ -1049,6 +1049,7 @@ class objectNode.new(body, superclass') {
     def kind = "object"
     def value = body
     def superclass = superclass'
+    def annotations = collections.list.new
     var otype := false
     var classname := "object"
     var data := false
@@ -1056,6 +1057,9 @@ class objectNode.new(body, superclass') {
         if (visitor.visitObject(self)) then {
             if (self.superclass != false) then {
                 self.superclass.accept(visitor)
+            }
+            for (self.annotations) do { ann ->
+                ann.accept(visitor)
             }
             for (self.value) do { x ->
                 x.accept(visitor)
@@ -1069,6 +1073,8 @@ class objectNode.new(body, superclass') {
         blkBefore, blkAfter))
         n := blk.apply(n)
         n.line := line
+        n.annotations.extend(listMap(annotations, blk)
+            before(blkBefore) after(blkAfter))
         blkAfter.apply(n)
         n
     }
