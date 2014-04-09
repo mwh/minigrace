@@ -327,6 +327,11 @@ method compileobject(o, outerRef, inheritingObject) {
     increaseindent
     out("var origSuperDepth = superDepth;")
     out("superDepth = {selfr};")
+    out("{selfr}.annotations = [];")
+    for (o.annotations.indices) do { i ->
+        def ann = compilenode(o.annotations.at(i))
+        out("{selfr}.annotations[{i - 1}] = {ann}")
+    }
     var pos := 0
     for (o.value) do { e ->
         if (e.kind == "method") then {

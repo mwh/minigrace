@@ -1537,7 +1537,7 @@ GraceMirrorMethod.prototype.methods['paramcounts'] = function(argcv) {
 function alloc_Mirror(o) {
     var m = Grace_allocObject();
     m.methods['methods'] = function(argcv) {
-        var meths = [];
+        var k, meths = [];
         for (k in o.methods) {
             meths.push(new GraceMirrorMethod(o, k));
         }
@@ -1545,12 +1545,19 @@ function alloc_Mirror(o) {
         return l;
     }
     m.methods['getMethod'] = function(argcv, gString) {
-        var name = gString._value
+        var k, name = gString._value;
         for (k in o.methods) {
             if (name == k) {
                 return (new GraceMirrorMethod(o, k));
             }
         }
+    }
+    m.methods['annotations'] = function(argcv) {
+        var annotations = [], i, l;
+        for (i = 0, l = o.annotations.length; i < l; i++) {
+            annotations.push(o.annotations[i]);
+        }
+        return new GraceList(annotations);
     }
     return m;
 }
