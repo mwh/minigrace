@@ -8,12 +8,13 @@
 // mirrors.c defines a Grace module "mirrors" which can be compiled for
 // dynamic or static linking. The module contains one method:
 //   reflect(obj : Any) -> Mirror
-// Mirrors support two methods:
+// Mirrors support three methods:
 //   methods -> List<MirrorMethod>
 //   getMethod(name : String) -> MirrorMethod
+//   annotations -> List<Any>
 // MirrorMethods support four methods:
 //   name -> String
-//   request(arglists : List of Lists) -> Any
+//   request(arglists : List<List<Any>>) -> Any
 //   partcount -> Number
 //   paramcounts -> List of Numbers
 // A sample use might be:
@@ -158,11 +159,34 @@ Object Mirror_methods(Object self, int nparams, int *argcv, Object *args,
     return l;
 }
 
+Object Mirror_annotations(Object self, int nparams, int *argcv, Object *args,
+        int flags) {
+    struct MirrorObject *s = (struct MirrorObject*)self;
+    Object o = s->obj;
+    ClassData c = o->class;
+    if (strncmp(c->name, "Object", 6) != 0) {
+        gracedie("cannot request annotations of non-user object\n");
+    }
+    struct UserObject *uo = (struct UserObject*)o;
+    gc_pause();
+    Object l = alloc_List();
+    Object arg;
+    int tmp = 1;
+    int i;
+    for (i = 0; i < uo->numannotations; i++) {
+        arg = uo->annotations[i];
+        callmethod(l, "push", 1, &tmp, &arg);
+    }
+    gc_unpause();
+    return l;
+}
+
 Object alloc_mirror(Object obj) {
     if (MirrorClass == NULL) {
-        MirrorClass = alloc_class("Mirror", 2);
+        MirrorClass = alloc_class("Mirror", 3);
         add_Method(MirrorClass, "methods", &Mirror_methods);
         add_Method(MirrorClass, "getMethod", &Mirror_getMethod);
+        add_Method(MirrorClass, "annotations", &Mirror_annotations);
     }
     Object o = alloc_obj(sizeof(Object), MirrorClass);
     struct MirrorObject *p = (struct MirrorObject*)o;

@@ -434,6 +434,7 @@ method compileobject(o, outerRef) {
     var selfr := "obj" ++ myc
     var numFields := 1
     var numMethods := 0
+    var numAnnotations := o.annotations.size
     var pos := 1
     var superobj := false
     out "  Object inheritingObject{myc} = inheritingObject;"
@@ -458,8 +459,8 @@ method compileobject(o, outerRef) {
         numFields := 4
     }
     globals.push("static ClassData objclass{myc};");
-    out("  Object " ++ selfr ++ " = alloc_userobj2({numMethods},"
-        ++ "{numFields}, objclass{myc});")
+    out("  Object " ++ selfr ++ " = alloc_userobj3({numMethods}, "
+        ++ "{numFields}, {numAnnotations}, objclass{myc});")
     out("  gc_frame_newslot({selfr});")
     if (o.classname != "object") then {
         out("if (objclass{myc} == NULL) \{")
@@ -487,6 +488,10 @@ method compileobject(o, outerRef) {
     out "    lowerouter{myc} = (*(struct UserObject *)self).data[0];"
     out "    (*(struct UserObject *)self).data[0] = thisouter{myc};"
     out "  \}"
+    for (o.annotations.indices) do { i ->
+        def ann = compilenode(o.annotations.at(i))
+        out("  (*(struct UserObject *){selfr}).annotations[{i - 1}] = {ann};")
+    }
     for (o.value) do { e ->
         if (e.kind == "method") then {
             compilemethod(e, selfr, pos)

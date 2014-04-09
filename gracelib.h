@@ -54,7 +54,9 @@ struct UserObject {
     jmp_buf *retpoint;
     Object super;
     Object *data;
+    Object *annotations;
     int ndata;
+    int numannotations;
 };
 
 struct StackFrameObject {
@@ -117,6 +119,7 @@ ClassData alloc_class3(const char *, int, void(*)(void *), void(*)(void *));
 Object alloc_Type(const char *, int);
 Object alloc_userobj(int, int);
 Object alloc_userobj2(int, int, ClassData);
+Object alloc_userobj3(int, int, int, ClassData);
 Object alloc_obj2(int, int);
 Object* alloc_var();
 Object alloc_HashMapClassObject();
