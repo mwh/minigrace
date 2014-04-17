@@ -2,7 +2,7 @@ include Makefile.conf
 
 ARCH:=$(shell uname -s)-$(shell uname -m)
 STABLE=88855bc35225a388b52f1574488df3486543f510
-all: minigrace $(OTHER_MODULES)
+all: minigrace gracepm $(OTHER_MODULES)
 
 REALSOURCEFILES = compiler.grace errormessages.grace util.grace ast.grace lexer.grace parser.grace genjs.grace genc.grace mgcollections.grace interactive.grace xmodule.grace identifierresolution.grace genjson.grace
 SOURCEFILES = $(REALSOURCEFILES) buildinfo.grace
@@ -160,9 +160,13 @@ known-good/%:
 	cd known-good && $(MAKE) $*
 	rm -f known-good/*out
 
-install: minigrace
+gracepm: gracepm.grace minigrace
+	./minigrace --verbose --make gracepm.grace
+
+install: minigrace gracepm
 	install -d $(PREFIX)/bin $(MODULE_PATH) $(OBJECT_PATH) $(INCLUDE_PATH)
 	install -m 755 minigrace $(PREFIX)/bin/minigrace
+	install -m 755 minigrace $(PREFIX)/bin/gracepm
 	install -m 755 unicode.gso $(OTHER_MODULES) $(MODULE_PATH)
 	install -m 755 gracelib.o $(OBJECT_PATH)
 	install -m 644 gracelib.h $(INCLUDE_PATH)
