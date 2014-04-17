@@ -166,7 +166,7 @@ gracepm: gracepm.grace minigrace
 install: minigrace gracepm
 	install -d $(PREFIX)/bin $(MODULE_PATH) $(OBJECT_PATH) $(INCLUDE_PATH)
 	install -m 755 minigrace $(PREFIX)/bin/minigrace
-	install -m 755 minigrace $(PREFIX)/bin/gracepm
+	install -m 755 gracepm $(PREFIX)/bin/gracepm
 	install -m 755 unicode.gso $(OTHER_MODULES) $(MODULE_PATH)
 	install -m 755 gracelib.o $(OBJECT_PATH)
 	install -m 644 gracelib.h $(INCLUDE_PATH)
