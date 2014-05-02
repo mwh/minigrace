@@ -393,6 +393,7 @@ method compileblock(o) {
         out("block{myc}.pattern = {pat};")
     }
     out("block{myc}.methods[\"match\"] = GraceBlock_match;")
+    out("block{myc}.methods[\"prefix?\"] = GraceBlock_lift;")
     out("block" ++ myc ++ ".receiver = this;")
     out("block{myc}.className = 'block<{modname}:{o.line}>';")
     out("block" ++ myc ++ ".real = function(")

@@ -846,6 +846,31 @@ function GraceBlock_match(argcv, o) {
     return new GraceFailedMatch(o);
 }
 
+function GraceLiftedBlock(of) {
+    this.block = of;
+}
+
+GraceLiftedBlock.prototype = Grace_allocObject();
+GraceLiftedBlock.prototype.methods['match'] = function(argcv, o) {
+    var mr = callmethod(this.block, "match", [1], o);
+    if (!Grace_isTrue(mr))
+        return new GraceFailedMatch(o);
+    var result = callmethod(mr, "result", [0]);
+    if (Grace_isTrue(result))
+        return new GraceSuccessfulMatch(o);
+    return new GraceFailedMatch(o);
+};
+GraceLiftedBlock.prototype.methods["|"] = function(argcv, o) {
+    return new GraceOrPattern(this, o);
+};
+GraceLiftedBlock.prototype.methods["&"] = function(argcv, o) {
+    return new GraceAndPattern(this, o);
+};
+
+function GraceBlock_lift(argcv, o) {
+    return new GraceLiftedBlock(this);
+}
+
 function classType(obj) {
     var t = new GraceType(obj.className);
     var o = obj;

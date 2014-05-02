@@ -111,6 +111,7 @@ ClassData Class;
 ClassData MatchResult;
 ClassData OrPattern;
 ClassData AndPattern;
+ClassData BlockPattern;
 ClassData GreaterThanPattern;
 ClassData LessThanPattern;
 ClassData ExceptionPacket;
@@ -663,6 +664,34 @@ Object alloc_AndPattern(Object l, Object r) {
     struct UserObject *b = (struct UserObject *)o;
     b->data[0] = l;
     b->data[1] = r;
+    return o;
+}
+Object BlockPattern_match(Object self, int nparts, int *argcv, Object *argv,
+        int flags) {
+    Object target = argv[0];
+    struct UserObject *b = (struct UserObject *)self;
+    Object block = b->data[0];
+    int tmp[1] = {0};
+    Object m = callmethod(block, "match", 1, argcv, argv);
+    if (!istrue(m))
+        return alloc_FailedMatch(target, NULL);
+    Object result = callmethod(m, "result", 1, tmp, argv);
+    if (istrue(result))
+        return alloc_SuccessfulMatch(target, NULL);
+    return alloc_FailedMatch(target, NULL);
+}
+Object alloc_BlockPattern(Object block) {
+    Object o = alloc_userobj2(3, 2, BlockPattern);
+    if (!BlockPattern) {
+        BlockPattern = o->class;
+        glfree(o->class->name);
+        o->class->name = "BlockPattern";
+        add_Method(BlockPattern, "|", &literal_or);
+        add_Method(BlockPattern, "&", &literal_and);
+        add_Method(BlockPattern, "match", &BlockPattern_match);
+    }
+    struct UserObject *b = (struct UserObject *)o;
+    b->data[0] = block;
     return o;
 }
 Object LessThanPattern_match(Object self, int nparts, int *argcv, Object *argv,
@@ -3762,6 +3791,10 @@ Object Block_pattern(Object self, int argc, int *argcv,
         return done;
     return o->data[1];
 }
+Object Block_lift(Object self, int argc, int *argcv, Object *argv,
+        int flags) {
+    return alloc_BlockPattern(self);
+}
 void Block__mark(struct BlockObject *o) {
     gc_mark(o->data[0]);
     gc_mark(o->data[1]);
@@ -3775,7 +3808,7 @@ Object alloc_Block(Object self, Object(*body)(Object, int, Object*, int),
         const char *modname, int line) {
     char buf[strlen(modname) + 15];
     sprintf(buf, "Block[%s:%i]", modname, line);
-    ClassData c = alloc_class3(buf, 10, (void*)&Block__mark,
+    ClassData c = alloc_class3(buf, 11, (void*)&Block__mark,
             (void*)&Block__release);
     if (!Block)
         Block = c;
@@ -3787,6 +3820,7 @@ Object alloc_Block(Object self, Object(*body)(Object, int, Object*, int),
     add_Method(c, "==", &Object_Equals);
     add_Method(c, "!=", &Object_NotEquals);
     add_Method(c, "pattern", &Block_pattern);
+    add_Method(c, "prefix?", &Block_lift);
     if (self == NULL && line == -1)
         add_Method(c, "_apply", &identity_function);
     struct BlockObject *o = (struct BlockObject*)(
