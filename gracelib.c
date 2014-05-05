@@ -2720,11 +2720,11 @@ Object module_io_init() {
     add_Method(IOModule, "listdir", &io_listdir);
     add_Method(IOModule, "findResource", &io_findResource);
     Object o = alloc_obj(sizeof(Object) * 3, IOModule);
+    gc_root(o);
     struct IOModuleObject *so = (struct IOModuleObject*)o;
     so->_stdin = alloc_File_from_stream(stdin);
     so->_stdout = alloc_File_from_stream(stdout);
     so->_stderr = alloc_File_from_stream(stderr);
-    gc_root(o);
     iomodule = o;
     return o;
 }
