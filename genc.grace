@@ -96,7 +96,7 @@ method definebindings(l, slot') {
                 snm := escapestring(n.name.value.value)
             } else {
                 tnm := escapeident(n.name.value)
-                snm := escapestring(n.name.value)
+                snm := escapestring2(n.name.value)
             }
             if (!declaredvars.contains(tnm)) then {
                 declaredvars.push(tnm)
