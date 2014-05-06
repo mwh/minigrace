@@ -3477,6 +3477,13 @@ method parse(toks) {
     }
     tokens := toks
     sym := tokens.first
+    if (sym.indent > 0) then {
+        def sugg = errormessages.suggestion.new
+        sugg.deleteRange(1, sym.indent) onLine(sym.line)
+        errormessages.syntaxError("The first line cannot be indented.")
+            atRange(sym.line, 1, sym.indent)
+            withSuggestion(sugg)
+    }
     sym.prev := lastToken
 // TODO: Do this in lexer.
     tokens.push(object {
