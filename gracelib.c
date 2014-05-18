@@ -3914,6 +3914,7 @@ Object alloc_userobj3(int numMethods, int numFields, int numAnnotations,
                 (void*)&UserObj__mark);
         GraceDefaultObject = alloc_obj(sizeof(struct UserObject) -
                 sizeof(struct Object), dc);
+        gc_root(GraceDefaultObject);
         GraceDefaultObject->flags |= FLAG_USEROBJ;
         struct UserObject *duo = (struct UserObject *)GraceDefaultObject;
         duo->super = NULL;
@@ -4484,6 +4485,7 @@ Object prelude_clone(Object self, int argc, int *argcv, Object *argv,
   size_t *size = sz;
   int nfields = (*size - sizeof(struct UserObject)) / sizeof(Object) + 1;
   Object ret = alloc_userobj2(0, nfields, obj->class);
+  gc_frame_newslot(ret);
   struct UserObject *uret = (struct UserObject *)ret;
   memcpy(ret, obj, *size);
   if (uo->super)
