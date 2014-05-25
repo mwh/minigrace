@@ -11,10 +11,7 @@ Some functionality is incomplete:
 - Numeric literals in non-decimal bases may only be integral.
 - Interpolated code inside string literals may not contain a right brace
   in any context.
-- Visibility annotations are checked only dynamically, not statically
-- The static typechecker is currently disabled. Types and generic
-  parameters are supported at runtime. The expected behaviour of
-  generics is described in <doc/generics>.
+- Type combinators are ignored.
 
 The compiler also supports the following extensions used internally,
 which are not part of the language and are subject to change:
@@ -47,7 +44,7 @@ which are not part of the language and are subject to change:
   * status returns the exit code
   * success returns true if the process exited 0
   * terminated returns true if the process has terminated
-- if-then-elseif-elseif-...-else with the standard C-like syntax
+- if-then-elseif-elseif-...-else
 - Setting the default visibility of everything in a file with the
   option -XDefaultVisibility=public|confidential. Three more specific
   options are also available: DefaultDefVisibility,

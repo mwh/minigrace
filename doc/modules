@@ -74,7 +74,14 @@ The module contains these methods:
   create(codepoint : Number) -> String
 These all return or test the corresponding Unicode property, or in the
 case of create return a String consisting of the character with the
-given codepoint.
+given codepoint. These methods create Patterns:
+  pattern(*codepointOrClass : Number | String) -> Pattern
+  pattern(*codepointOrClass : Number | String) not(*notCodepointOrClass :
+        Number | String) -> Pattern
+These return patterns matching the given codepoints or character
+classes. These patterns are implemented in platform-specific code and
+are likely faster than testing multiple classes or codepoints
+separately.
 
 This module is available with both the native and ECMAScript compiler.
 

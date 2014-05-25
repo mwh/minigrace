@@ -29,10 +29,10 @@ To compile to ECMAScript instead of native code, use:
   ./minigrace --target es -o file.js file.grace
 
 To pretty-print the input source code as Grace, use:
-  ./minigrace --target grace -o file.js file.grace
+  ./minigrace --target grace -o prettyfile.grace file.grace
 
 To compile to a specialised target, like a parse tree, use:
-  ./minigrace --target parse file.js
+  ./minigrace --target parse file.grace
   There are several targets for specialised purposes. Use --target help
   to list them. Useful targets may be "lex" (tokens) and "subtypematrix"
   (mapping of types to supertypes).

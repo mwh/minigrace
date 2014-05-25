@@ -16,8 +16,9 @@ Tarballs are available from <http://ecs.vuw.ac.nz/~mwh/minigrace/dist/>
 Git
 ---
 The Git repository is capable of bootstrapping itself with `make` on
-some systems, but it is recommended to bootstrap from a recent tarball
-and is required on some platforms.
+some systems, but it is recommended to bootstrap from a recent tarball.
+Bootstrapping from a tarball takes minutes, while bootstrapping
+from nothing takes several hours and fails entirely on many systems.
 
 To bootstrap from a tarball, run `tools/tarball-bootstrap` and it will
 provide instructions for downloading the correct tarball. You can then
