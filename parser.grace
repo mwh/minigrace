@@ -716,7 +716,7 @@ method doif {
                 // "elseifs", turning them into ifs inside the else.
                 statementToken := sym
                 next
-                if(sym.kind != "lparen") then {
+                if((sym.kind != "lbrace") && (sym.kind != "lparen")) then {
                     def suggestion = errormessages.suggestion.new
                     // Look ahead for a rparen or then.
                     def nextTok = findNextToken({ t -> (t.line == statementToken.line)
@@ -748,6 +748,7 @@ method doif {
                     errormessages.syntaxError("An elseif statement must have an expression in parentheses after the 'elseif'.")atPosition(
                         sym.line, sym.linePos)withSuggestion(suggestion)
                 }
+                def condDelim = sym.kind
                 next
                 if(didConsume({expression}).not) then {
                     def suggestion = errormessages.suggestion.new
@@ -775,12 +776,22 @@ method doif {
                         }
                     }
                 }
-                if(sym.kind != "rparen") then {
-                    checkBadOperators
-                    def suggestion = errormessages.suggestion.new
-                    suggestion.insert(")")afterToken(lastToken)
-                    errormessages.syntaxError("An expression beginning with a '(' must end with a ')'.")atPosition(
-                        lastToken.line, lastToken.linePos + lastToken.size)withSuggestion(suggestion)
+                if (condDelim == "lparen") then {
+                    if(sym.kind != "rparen") then {
+                        checkBadOperators
+                        def suggestion = errormessages.suggestion.new
+                        suggestion.insert(")")afterToken(lastToken)
+                        errormessages.syntaxError("An expression beginning with a '(' must end with a ')'.")atPosition(
+                            lastToken.line, lastToken.linePos + lastToken.size)withSuggestion(suggestion)
+                    }
+                } else {
+                    if (sym.kind != "rbrace") then {
+                        checkBadOperators
+                        def suggestion = errormessages.suggestion.new
+                        suggestion.insert("}")afterToken(lastToken)
+                        errormessages.syntaxError("The condition of elseif must be enclosed in braces.")atPosition(
+                            lastToken.line, lastToken.linePos + lastToken.size)withSuggestion(suggestion)
+                    }
                 }
                 next
                 econd := values.pop
