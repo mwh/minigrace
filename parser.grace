@@ -718,60 +718,60 @@ method doif {
                 next
                 if((sym.kind != "lbrace") && (sym.kind != "lparen")) then {
                     def suggestion = errormessages.suggestion.new
-                    // Look ahead for a rparen or then.
+                    // Look ahead for a rbrace or then.
                     def nextTok = findNextToken({ t -> (t.line == statementToken.line)
                         && ((t.kind == "rparen") || (t.kind == "lbrace")
                         || ((t.kind == "identifier") && (t.value == "then"))) })
                     if(nextTok == false) then {
-                        suggestion.insert(" («expression») then \{")afterToken(statementToken)
-                    } elseif{nextTok.kind == "rparen"} then {
+                        suggestion.insert(" \{«expression»} then \{")afterToken(statementToken)
+                    } elseif{nextTok.kind == "rbrace"} then {
                         if(nextTok == sym) then {
-                            suggestion.insert("(«expression»")beforeToken(sym)
+                            suggestion.insert("\{«expression»")beforeToken(sym)
                         } else {
-                            suggestion.insert("(")beforeToken(sym)
+                            suggestion.insert("\{")beforeToken(sym)
                         }
                     } elseif{nextTok.kind == "lbrace"} then {
                         if(nextTok == sym) then {
-                            suggestion.insert(" («expression») then")afterToken(statementToken)
+                            suggestion.insert(" \{«expression») then")afterToken(statementToken)
                         } else {
-                            suggestion.insert("(")beforeToken(sym)
-                            suggestion.insert(") then")afterToken(nextTok.prev)andTrailingSpace(true)
+                            suggestion.insert("\{")beforeToken(sym)
+                            suggestion.insert("} then")afterToken(nextTok.prev)andTrailingSpace(true)
                         }
                     } elseif{nextTok.kind == "identifier"} then {
                         if(nextTok == sym) then {
-                            suggestion.insert("(«expression») ")beforeToken(sym)
+                            suggestion.insert("\{«expression»} ")beforeToken(sym)
                         } else {
-                            suggestion.insert("(")beforeToken(sym)
-                            suggestion.insert(")")afterToken(nextTok.prev)andTrailingSpace(true)
+                            suggestion.insert("\{")beforeToken(sym)
+                            suggestion.insert("\}")afterToken(nextTok.prev)andTrailingSpace(true)
                         }
                     }
-                    errormessages.syntaxError("An elseif statement must have an expression in parentheses after the 'elseif'.")atPosition(
+                    errormessages.syntaxError("An elseif statement must have an expression in braces after the 'elseif'.")atPosition(
                         sym.line, sym.linePos)withSuggestion(suggestion)
                 }
                 def condDelim = sym.kind
                 next
                 if(didConsume({expression}).not) then {
                     def suggestion = errormessages.suggestion.new
-                    // Look ahead for a rparen or then.
-                    var nextTok := findNextToken({ t -> (t.line == lastToken.line) && (t.kind == "rparen") })
+                    // Look ahead for a rbrace or then.
+                    var nextTok := findNextToken({ t -> (t.line == lastToken.line) && (t.kind == "rbrace") })
                     if(nextTok == false) then {
-                        nextTok := findNextValidToken("rparen")
+                        nextTok := findNextValidToken("rbrace")
                         if(nextTok == sym) then {
-                            suggestion.insert("«expression») then \{")afterToken(lastToken)
+                            suggestion.insert("«expression»} then \{")afterToken(lastToken)
                         } else {
-                            suggestion.replaceTokenRange(sym, nextTok.prev)leading(true)trailing(false)with("«expression») then \{")
+                            suggestion.replaceTokenRange(sym, nextTok.prev)leading(true)trailing(false)with("«expression»} then \{")
                         }
-                        errormessages.syntaxError("An elseif statement must have an expression in parentheses after the 'elseif'.")atPosition(
+                        errormessages.syntaxError("An elseif statement must have an expression in braces after the 'elseif'.")atPosition(
                             sym.line, sym.linePos)withSuggestion(suggestion)
                     } else {
                         if(nextTok == sym) then {
                             suggestion.insert("«expression»")afterToken(lastToken)
-                            errormessages.syntaxError("An elseif statement must have an expression in parentheses after the 'elseif'.")atPosition(
+                            errormessages.syntaxError("An elseif statement must have an expression in bracees after the 'elseif'.")atPosition(
                                 sym.line, sym.linePos)withSuggestion(suggestion)
                         } else {
                             //checkInvalidExpression
                             suggestion.replaceTokenRange(sym, nextTok.prev)leading(false)trailing(true)with("«expression»")
-                            errormessages.syntaxError("An elseif statement must have an expression in parentheses after the 'elseif'.")atRange(
+                            errormessages.syntaxError("An elseif statement must have an expression in braces after the 'elseif'.")atRange(
                                 sym.line, sym.linePos, nextTok.linePos - 1)withSuggestion(suggestion)
                         }
                     }
@@ -795,6 +795,9 @@ method doif {
                 }
                 next
                 econd := values.pop
+                if (condDelim == "lparen") then {
+                    econd := ast.memberNode.new("apply", econd)
+                }
                 if ((accept("identifier") &&
                     (sym.value == "then"))) then {
                     next
