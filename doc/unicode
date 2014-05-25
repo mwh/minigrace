@@ -2,9 +2,6 @@ Minigrace supports Unicode programs and data. This document describes
 the intended behaviour of the compiler and runtime relating to this
 feature.
 
-The JavaScript runtime does not have access to the Unicode Character
-Database, and so does not support any of these functionalities.
-
 Grace source code is written in Unicode. Minigrace recognises only the
 UTF-8 encoding, which is compatible with US-ASCII. Source text should
 not contain byte-order marks.

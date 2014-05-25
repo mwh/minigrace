@@ -1,8 +1,9 @@
 A compiler for the Grace language.
 
-Minigrace compiles Grace to C and JavaScript. The compiler is written in
-Grace itself. It supports most of the specified language to date: for
-details on current language feature support see <doc/errata>.
+Minigrace compiles Grace to C and ECMAScript (JavaScript). The compiler
+is written in Grace itself. It supports most of the specified language
+to date: for details on current language feature support see
+<doc/errata>.
 
 Minigrace should work on POSIX-compliant systems, and is known to work
 on Linux, NetBSD, and Mac OS X. It requires a properly-configured GCC on

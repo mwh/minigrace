@@ -10,9 +10,9 @@ be called directly from Grace code. All arguments and return values will
 be Objects. Also see grace-gtk (<https://github.com/mwh/grace-gtk>),
 which binds the GTK+, GDK, and Cairo libraries for use in Grace code.
 
-For the JavaScript backend, see gracelib.js and particularly the
+For the ECMAScript backend, see gracelib.js and particularly the
 gracecode_io and gracecode_unicode functions. An object contains an
-object of methods and a className field, and any JavaScript object with
+object of methods and a className field, and any ECMAScript object with
 this form can be used as a Grace object. Importable modules should be
 returned by a function named gracecode_<module>. There is a "dom"
 module included in the distribution which wraps the HTML Document Object

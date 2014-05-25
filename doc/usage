@@ -25,8 +25,8 @@ To launch an interactive read-eval-print interpreter, use:
   The interpreter supports much, but not all, of the language
   supported by the compiler.
 
-To compile to JavaScript instead of native code, use:
-  ./minigrace --target js -o file.js file.grace
+To compile to ECMAScript instead of native code, use:
+  ./minigrace --target es -o file.js file.grace
 
 To pretty-print the input source code as Grace, use:
   ./minigrace --target grace -o file.js file.grace

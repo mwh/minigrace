@@ -21,7 +21,7 @@ unicodegen.py
 misc
 tests/test.log
 buildinfo.grace
-js/index.html
+es/index.html
 .git-generation-cache
 c/*.c
 c/*.grace

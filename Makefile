@@ -4,9 +4,9 @@ ARCH:=$(shell uname -s)-$(shell uname -m)
 STABLE=88855bc35225a388b52f1574488df3486543f510
 all: minigrace gracepm $(OTHER_MODULES)
 
-REALSOURCEFILES = compiler.grace errormessages.grace util.grace ast.grace lexer.grace parser.grace genjs.grace genc.grace mgcollections.grace interactive.grace xmodule.grace identifierresolution.grace genjson.grace
+REALSOURCEFILES = compiler.grace errormessages.grace util.grace ast.grace lexer.grace parser.grace genes.grace genc.grace mgcollections.grace interactive.grace xmodule.grace identifierresolution.grace genjson.grace
 SOURCEFILES = $(REALSOURCEFILES) buildinfo.grace
-JSSOURCEFILES = js/compiler.js js/errormessages.js js/ast.js js/lexer.js js/parser.js js/genjs.js js/genc.js js/mgcollections.js js/xmodule.js js/identifierresolution.js js/buildinfo.js js/genjson.js
+JSSOURCEFILES = es/compiler.js es/errormessages.js es/ast.js es/lexer.js es/parser.js es/genes.js es/genc.js es/mgcollections.js es/xmodule.js es/identifierresolution.js es/buildinfo.js es/genjson.js
 
 ifeq ($(MINIGRACE_BUILD_SUBPROCESSES),)
 MINIGRACE_BUILD_SUBPROCESSES = 2
@@ -58,27 +58,27 @@ l1/minigrace: known-good/$(ARCH)/$(STABLE)/minigrace $(SOURCEFILES) $(UNICODE_MO
 l2/minigrace: l1/minigrace $(SOURCEFILES) $(UNICODE_MODULE) gracelib.o gracelib.h $(OTHER_MODULES)
 	( mkdir -p l2 ; cd l2 ; for f in $(SOURCEFILES) gracelib.o gracelib.h $(UNICODE_MODULE) $(OTHER_MODULES) ; do ln -sf ../$$f . ; done ; ../l1/minigrace --verbose --make --native --module minigrace --vtag l1 -j $(MINIGRACE_BUILD_SUBPROCESSES) compiler.grace )
 
-js: js/index.html
+es: es/index.html
 
-js/StandardPrelude.js: StandardPrelude.grace minigrace
-	./minigrace --verbose --target js -XNativePrelude -o js/StandardPrelude.js StandardPrelude.grace
-	echo "Grace_prelude = do_import('StandardPrelude', gracecode_StandardPrelude);" >> js/StandardPrelude.js
+es/StandardPrelude.js: StandardPrelude.grace minigrace
+	./minigrace --verbose --target js -XNativePrelude -o es/StandardPrelude.js StandardPrelude.grace
+	echo "Grace_prelude = do_import('StandardPrelude', gracecode_StandardPrelude);" >> es/StandardPrelude.js
 
-js/minigrace.js: js/minigrace.in.js $(JSSOURCEFILES) js/StandardPrelude.js js/gracelib.js js/dom.js
+es/minigrace.js: es/minigrace.in.js $(JSSOURCEFILES) es/StandardPrelude.js es/gracelib.js es/dom.js
 	@echo Generating minigrace.js from minigrace.in.js...
-	cat js/minigrace.in.js > js/minigrace.js
-	echo "MiniGrace.version = '$$(tools/calculate-version HEAD)';" >> js/minigrace.js
-	echo "MiniGrace.revision = '$$(git rev-parse HEAD|cut -b1-7)';" >> js/minigrace.js
-	cat js/dom.js >> js/minigrace.js
-	cat js/gracelib.js >> js/minigrace.js
-	cat js/StandardPrelude.js >> js/minigrace.js
-	for f in $(JSSOURCEFILES) ; do cat $$f >> js/minigrace.js ; done
-	cat js/unicodedata.js >> js/minigrace.js
+	cat es/minigrace.in.js > es/minigrace.js
+	echo "MiniGrace.version = '$$(tools/calculate-version HEAD)';" >> es/minigrace.js
+	echo "MiniGrace.revision = '$$(git rev-parse HEAD|cut -b1-7)';" >> es/minigrace.js
+	cat es/dom.js >> es/minigrace.js
+	cat es/gracelib.js >> es/minigrace.js
+	cat es/StandardPrelude.js >> es/minigrace.js
+	for f in $(JSSOURCEFILES) ; do cat $$f >> es/minigrace.js ; done
+	cat es/unicodedata.js >> es/minigrace.js
 
-js/%.js: %.grace minigrace
-	./minigrace --verbose --target js -o $@ $<
+es/%.js: %.grace minigrace
+	./minigrace --verbose --target es -o $@ $<
 
-js/index.html: js/index.in.html js/ace.in.html js/minigrace.js
+es/index.html: es/index.in.html es/ace.in.html es/minigrace.js
 	@echo Generating index.html from index.in.html...
 	@awk '!/<!--\[!SH\[/ { print } /<!--\[!SH\[/ { gsub(/<!--\[!SH\[/, "") ; gsub(/\]!\]-->/, "") ; system($$0) }' < $< > $@
 
@@ -149,9 +149,9 @@ clean:
 	rm -f $(SOURCEFILES:.grace=.gct) minigrace.gct
 	rm -f minigrace-dynamic
 	rm -f $(SOURCEFILES:.grace=)
-	( cd js ; for sf in $(SOURCEFILES:.grace=.js) ; do rm -f $$sf ; done )
-	( cd js ; for sf in $(SOURCEFILES) ; do rm -f $$sf ; done )
-	rm -f js/minigrace.js
+	( cd es ; for sf in $(SOURCEFILES:.grace=.js) ; do rm -f $$sf ; done )
+	( cd es ; for sf in $(SOURCEFILES) ; do rm -f $$sf ; done )
+	rm -f es/minigrace.js
 	( cd c ; rm -f *.gcn *.gct *.c *.h *.grace minigrace unicode.gso gracelib.o )
 	rm -f minigrace.gco minigrace
 
@@ -175,4 +175,4 @@ install: minigrace gracepm
 Makefile.conf: configure
 	./configure
 
-.PHONY: all clean selfhost-stats test js c selftest install samples sample-%
+.PHONY: all clean selfhost-stats test es c selftest install samples sample-%

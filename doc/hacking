@@ -17,10 +17,10 @@ library, it is possible that your changes cause the compiler to begin
 segfaulting during build and reverting your changes does not fix it. In
 this case, undo the change and run `make clean` and then `make` again.
 
-If you are working on the JavaScript backend you will probably find that
+If you are working on the ECMAScript backend you will probably find that
 you need to perform a hard reload (commonly shift-reload) in your
 browser to cause it to pick up the new versions of files. If your
-modifications are only to js/gracelib.js you do not need to `make js`
+modifications are only to es/gracelib.js you do not need to `make es`
 after changes, but editing any .grace or .in.html always requires
 rebuilding. In order to run the tests or load the samples in the user
 interface the UI must be accessed over HTTP. Most browsers will not
@@ -55,8 +55,8 @@ not include merge commits in this branch.
 
 When you have a complete branch ready for integration please ensure that
 the compiler builds from the beginning and the test suite passes. If
-your changes are to the JavaScript backend or runtime library, please
-ensure that the tests succeed in the JavaScript user interface as well.
+your changes are to the ECMAScript backend or runtime library, please
+ensure that the tests succeed in the ECMAScript user interface as well.
 
 Submitting changes
 ------------------

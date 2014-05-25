@@ -51,7 +51,7 @@ A sample use might be:
   import "mirrors" as m
   m.reflect(1).getMethod("+").request([[2]]) == 3
 
-This module is available with both the native and JavaScript compiler.
+This module is available with both the native and ECMAScript compiler.
 
 unicode
 -------
@@ -76,7 +76,7 @@ These all return or test the corresponding Unicode property, or in the
 case of create return a String consisting of the character with the
 given codepoint.
 
-This module is available with both the native and JavaScript compiler.
+This module is available with both the native and ECMAScript compiler.
 
 curl
 ----
@@ -151,5 +151,5 @@ The math module provides several methods:
   random -> Number
     Returns a random number in the interval [0, 1].
 
-This module is available with both the native and JavaScript compiler.
+This module is available with both the native and ECMAScript compiler.
 The precision and distribution is platform-dependent.
