@@ -74,7 +74,7 @@ class evalVisitor.new {
                 if ((v.kind == "replvar") || (v.kind == "replobj") ||
                     (v.kind == "replblock")) then {
                     val
-                } elseif (v.kind == "identifier") then {
+                } elseif {v.kind == "identifier"} then {
                     resolveidentifier(val)
                 } else {
                     val.accept(self)
@@ -89,9 +89,9 @@ class evalVisitor.new {
     method resolveidentifier(v) {
         if (v.value == "true") then {
             return replObj.new("replvar", true)
-        } elseif (v.value == "false") then {
+        } elseif {v.value == "false"} then {
             return replObj.new("replvar", false)
-        } elseif (v.value == "done") then {
+        } elseif {v.value == "done"} then {
             return replObj.new("replvar", done)
         } else {
             // _env may not be the current object env, for example in closures
@@ -141,7 +141,7 @@ class evalVisitor.new {
             for (o.val.value) do { e ->
                 if (e.kind == "defdec") then {
                     numMethods := numMethods + 1
-                } elseif (e.kind == "vardec") then {
+                } elseif {e.kind == "vardec"} then {
                     numMethods := numMethods + 2
                 }
             }
@@ -159,7 +159,7 @@ class evalVisitor.new {
                 if (e.kind == "defdec") then {
                     repl.addmethod(no, o.name, e.name.value, pos)
                     pos := pos + 1
-                } elseif (e.kind == "vardec") then {
+                } elseif {e.kind == "vardec"} then {
                     repl.addmethod(no, o.name, e.name.value, pos)
                     pos := pos + 1
                     repl.addmethod(no, o.name, e.name.value ++ ":=", pos)
@@ -401,25 +401,25 @@ class evalVisitor.new {
             } else {
                 _result := replObj.new("replvar", print(arg.val))
             }
-        } elseif ((name == "for()do") &&
+        } elseif {(name == "for()do") &&
                   (in.kind == "identifier") &&
-                  (in.value == "prelude")) then {
+                  (in.value == "prelude")} then {
             // for()do
             def cond = node.with[1].args[1]
             def body = node.with[2].args[1]
             def fornode = ast.forNode.new(cond, body)
             visitFor(fornode)
-        } elseif ((name == "while()do") &&
+        } elseif {(name == "while()do") &&
                   (in.kind == "identifier") &&
-                  (in.value == "prelude")) then {
+                  (in.value == "prelude")} then {
             // while()do
             def cond = node.with[1].args[1]
             def body = node.with[2].args[1]
             def whilenode = ast.whileNode.new(cond, body)
             visitWhile(whilenode)
-        } elseif ((name == "minigrace") &&
+        } elseif {(name == "minigrace") &&
                   (in.kind == "identifier") &&
-                  (in.value == "prelude")) then {
+                  (in.value == "prelude")} then {
             // minigrace object
             _result := replObj.new("replvar", minigrace)
         } else {
@@ -429,10 +429,10 @@ class evalVisitor.new {
             if ((false == inobj.val) && (name == "&&")) then {
                 // short-circuit '&&'
                 _result := inobj
-            } elseif ((true == inobj.val) && (name == "||")) then {
+            } elseif {(true == inobj.val) && (name == "||")} then {
                 // short-circuit '||'
                 _result := inobj
-            } elseif (findmethod(name, inobj) != false) then {
+            } elseif {findmethod(name, inobj) != false} then {
                 // interactive method
                 def methobj = findmethod(name, inobj)
                 def meth = methobj.val
@@ -498,12 +498,12 @@ class evalVisitor.new {
                 if (raiseagain != false) then {
                     ReturnException.raise(raiseagain)
                 }
-            } elseif (findvar(name, inobj) != false) then {
+            } elseif {findvar(name, inobj) != false} then {
                 // this call is actually a variable access, so just return the
                 // value
                 _result := findvar(name, inobj)
-            } elseif ((name[namelen - 1] == ":") && (name[namelen] == "=") &&
-                      (findvar(name.substringFrom(1)to(namelen - 2), inobj) != false)) then {
+            } elseif {(name[namelen - 1] == ":") && (name[namelen] == "=") &&
+                      (findvar(name.substringFrom(1)to(namelen - 2), inobj) != false)} then {
                 // variable assignment (bind)
                 def o = findvar(name.substringFrom(1)to(namelen - 2), inobj)
                 def newvar = resolve(node.with[1].args[1])
@@ -527,7 +527,7 @@ class evalVisitor.new {
                         if ((argobj.kind == "replobj") &&
                             (name != "==") && (name != "!=")) then {
                             no := createnativeobject(argobj)
-                        } elseif (argobj.kind == "replblock") then {
+                        } elseif {argobj.kind == "replblock"} then {
                             if ((name == "&&") || (name == "||")) then {
                                 // If this is a boolean call then explicitly
                                 // apply block parameters that were used for
@@ -901,42 +901,42 @@ method startRepl {
         for (line) do { c ->
             if (c == "(") then {
                 nparens := nparens + 1
-            } elseif (c == ")") then {
+            } elseif {c == ")"} then {
                 nparens := nparens - 1
-            } elseif (c == "\{") then {
+            } elseif {c == "\{"} then {
                 nbraces := nbraces + 1
-            } elseif (c == "\}") then {
+            } elseif {c == "\}"} then {
                 nbraces := nbraces - 1
-            } elseif (c == "[") then {
+            } elseif {c == "["} then {
                 nsquares := nsquares + 1
-            } elseif (c == "]") then {
+            } elseif {c == "]"} then {
                 nsquares := nsquares - 1
             }
         }
         if (!iscontinued) then {
             if ((line == "q") || (line == "quit")) then {
                 cont := false
-            } elseif ((line[1] == "/") && (line[2] == "/")) then {
+            } elseif {(line[1] == "/") && (line[2] == "/")} then {
                 // skip comments
             } else {
                 util.errno := 0
                 var toks := lexer.Lexer.new.lexinput(completeline)
                 if (!io.input.isatty && (util.errno != 0)) then {
                     sys.exit(util.errno)
-                } elseif (util.errno == 0) then {
+                } elseif {util.errno == 0} then {
                     for (toks) do {t->
                         util.lines.push("lines unavailable in interpreter")
                     }
                     var vals := parser.parse(toks)
                     if (!io.input.isatty && (util.errno != 0)) then {
                         sys.exit(util.errno)
-                    } elseif (util.errno == 0) then {
+                    } elseif {util.errno == 0} then {
                         // TODO - this used to pass tcenv into identifier
                         // resolution, but doesn't now. Things seem to work.
                         vals := identifierresolution.resolve(vals)
                         if (!io.input.isatty && (util.errno != 0)) then {
                             sys.exit(util.errno)
-                        } elseif (util.errno == 0) then {
+                        } elseif {util.errno == 0} then {
                             for (vals) do { val ->
                                 val.accept(visitor)
                                 def result = visitor.getResult

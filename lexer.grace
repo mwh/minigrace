@@ -221,39 +221,39 @@ def LexerClass = object {
                         tok := IdentifierToken.new(accum)
                         tokens.push(tok)
                         done := true
-                    } elseif (mode == "\"") then {
+                    } elseif {mode == "\""} then {
                         tok := StringToken.new(accum)
                         tokens.push(tok)
                         done := true
-                    } elseif (mode == "x") then {
+                    } elseif {mode == "x"} then {
                         tok := OctetsToken.new(accum)
                         tokens.push(tok)
                         done := true
-                    } elseif (mode == ",") then {
+                    } elseif {mode == ","} then {
                         tok := CommaToken.new
                         tokens.push(tok)
                         done := true
-                    } elseif (mode == ".") then {
+                    } elseif {mode == "."} then {
                         tok := DotToken.new
                         tokens.push(tok)
                         done := true
-                    } elseif (mode == "\{") then {
+                    } elseif {mode == "\{"} then {
                         tok := LBraceToken.new
                         tokens.push(tok)
                         done := true
-                    } elseif (mode == "}") then {
+                    } elseif {mode == "}"} then {
                         tok := RBraceToken.new
                         tokens.push(tok)
                         done := true
-                    } elseif (mode == "(") then {
+                    } elseif {mode == "("} then {
                         tok := LParenToken.new
                         tokens.push(tok)
                         done := true
-                    } elseif (mode == ")") then {
+                    } elseif {mode == ")"} then {
                         tok := RParenToken.new
                         tokens.push(tok)
                         done := true
-                    } elseif (mode == "[") then {
+                    } elseif {mode == "["} then {
                         tok := LSquareToken.new
                         tokens.push(tok)
                         done := true
@@ -262,19 +262,19 @@ def LexerClass = object {
                         tok := RSquareToken.new
                         tokens.push(tok)
                         done := true
-                    } elseif (mode == "<") then {
+                    } elseif {mode == "<"} then {
                         tok := LGenericToken.new
                         tokens.push(tok)
                         done := true
-                    } elseif (mode == ">") then {
+                    } elseif {mode == ">"} then {
                         tok := RGenericToken.new
                         tokens.push(tok)
                         done := true
-                    } elseif (mode == ";") then {
+                    } elseif {mode == ";"} then {
                         tok := SemicolonToken.new
                         tokens.push(tok)
                         done := true
-                    } elseif (mode == "m") then {
+                    } elseif {mode == "m"} then {
                         if ((tokens.size > 1).andAlso {tokens.last.kind == "dot"}) then {
                             def dot = tokens.pop
                             if (tokens.last.kind == "num") then {
@@ -312,12 +312,12 @@ def LexerClass = object {
                                     errormessages.syntaxError("A number may only follow a '.' if there is a number before the '.'. "
                                         ++ "To join a number to a string, use '++'.")atRange(
                                         dot.line, dot.linePos, dot.linePos)withSuggestion(suggestion)
-                                } elseif((tokens.last.kind == "op") || (tokens.last.kind == "bind")) then {
+                                } elseif{(tokens.last.kind == "op") || (tokens.last.kind == "bind")} then {
                                     def suggestion = errormessages.suggestion.new
                                     suggestion.insert("0")atPosition(dot.linePos)onLine(dot.line)
                                     errormessages.syntaxError("A number must have a digit before the decimal point.")atPosition(
                                         dot.line, dot.linePos)withSuggestion(suggestion)
-                                } elseif(tokens.last.kind == "identifier") then {
+                                } elseif{tokens.last.kind == "identifier"} then {
                                     def suggestions = []
                                     if(tokens.last.value == "o") then {
                                         def suggestion = errormessages.suggestion.new
@@ -339,32 +339,32 @@ def LexerClass = object {
                         }
                         tokens.push(tok)
                         done := true
-                    } elseif (mode == "o") then {
+                    } elseif {mode == "o"} then {
                         tok := OpToken.new(accum)
                         if (accum == "->") then {
                             tok := ArrowToken.new
-                        } elseif (accum == ":=") then {
+                        } elseif {accum == ":="} then {
                             tok := BindToken.new
-                        } elseif (accum == ":") then {
+                        } elseif {accum == ":"} then {
                             tok := ColonToken.new
                         }
                         tokens.push(tok)
                         done := true
-                    } elseif (mode == "d") then {
+                    } elseif {mode == "d"} then {
                         indentLevel := linePosition - 1//accum.size
                         done := true
-                    } elseif (mode == "n") then {
+                    } elseif {mode == "n"} then {
                         done := true
-                    } elseif (mode == "c") then {
+                    } elseif {mode == "c"} then {
                         def cmt = accum.substringFrom(3)to(accum.size)
                         tokens.push(CommentToken.new(cmt))
                         done := true
-                    } elseif (mode == "p") then {
+                    } elseif {mode == "p"} then {
                         if (accum.substringFrom(1)to(8) == "#pragma ") then {
                             util.processExtension(
                                 accum.substringFrom(9)to(accum.size))
                         }
-                    } elseif (done) then {
+                    } elseif {done} then {
                         //print(mode, accum, tokens)
                     } else {
                         errormessages.syntaxError("Lexing error: no handler for mode {mode} with accum {accum}.")atPosition(lineNumber, linePosition)
@@ -382,7 +382,7 @@ def LexerClass = object {
                     var inc := 0
                     if ((n >= 48) && (n <= 57)) then {
                         inc := n - 48 // 0
-                    } elseif((n >= 65) && (n <= 90)) then {
+                    } elseif{(n >= 65) && (n <= 90)} then {
                         inc := n - 55 // 'A' - 10
                     } else {
                         inc := n - 87 // 'a' - 10
@@ -484,7 +484,7 @@ def LexerClass = object {
                 }
                 if (unicode.isSymbolMathematical(ordval)) then {
                     return true
-                } elseif (unicode.iscategory(c, "So")) then {
+                } elseif {unicode.iscategory(c, "So")} then {
                     return true
                 }
                 return false
@@ -505,11 +505,11 @@ def LexerClass = object {
                         cLines.push(cLine)
                         line := ""
                         cLine := ""
-                    } elseif(c == "\r") then {
-                    } elseif(c == "\\") then {
+                    } elseif{c == "\r"} then {
+                    } elseif{c == "\\"} then {
                         line := line ++ "\\"
                         cLine := cLine ++ "\\\\"
-                    } elseif(c == "\"") then {
+                    } elseif{c == "\""} then {
                         line := line ++ "\""
                         cLine := cLine ++ "\\\""
                     } else {
@@ -703,7 +703,7 @@ def LexerClass = object {
                     }
                     if (instr) then {
 
-                    } elseif ((mode != "c") && (mode != "p")) then {
+                    } elseif {(mode != "c") && (mode != "p")} then {
                         // Not in a comment, so look for a mode.
                         if ((c == " ") && (mode != "d")) then {
                             newmode := "n"
@@ -733,13 +733,13 @@ def LexerClass = object {
                         }
                         if ((mode == "i") && (c == "<")) then {
                             newmode := "<"
-                        } elseif (iGTLT.match(mode)
-                            && (c == ">")) then {
+                        } elseif {iGTLT.match(mode)
+                            && (c == ">")} then {
                             if (mode == ">") then {
                                 modechange(tokens, mode, accum)
                             }
                             newmode := ">"
-                        } elseif (operatorChar.match(ordval)) then {
+                        } elseif {operatorChar.match(ordval)} then {
                             newmode := "o"
                         }
                         if (selfModes.match(ordval)) then {
@@ -857,7 +857,7 @@ def LexerClass = object {
                             newmode := "n"
                             accum := ""
                         }
-                    } elseif (instr) then {
+                    } elseif {instr} then {
                         if (c == "\n") then {
                             if (interpdepth > 0) then {
                                 // Find closest {.
@@ -896,7 +896,7 @@ def LexerClass = object {
                                 var count := 0
                                 while { i <= nextLine.size } do {
                                     if(nextLine[i] == "\"") then { count := count + 1 }
-                                    elseif(nextLine[i] == "\\") then { i := i + 1 }
+                                    elseif{nextLine[i] == "\\"} then { i := i + 1 }
                                     i := i + 1
                                 }
                                 if ((count % 2) == 1) then {
@@ -928,32 +928,32 @@ def LexerClass = object {
                             if (c == "n") then {
                                 // Newline escape
                                 accum := accum ++ "\u000a"
-                            } elseif (c == "u") then {
+                            } elseif {c == "u"} then {
                                 // Beginning of a four-digit Unicode escape
                                 // (for a BMP codepoint).
                                 unichars := 4
                                 codepoint := 0
-                            } elseif (c == "U") then {
+                            } elseif {c == "U"} then {
                                 // Beginning of a six-digit Unicode escape
                                 // (for a general codepoint).
                                 unichars := 6
                                 codepoint := 0
-                            } elseif (c == "t") then {
+                            } elseif {c == "t"} then {
                                 // Tab escape
                                 accum := accum ++ "\u0009"
-                            } elseif (c == "r") then {
+                            } elseif {c == "r"} then {
                                 // Carriage return escape
                                 accum := accum ++ "\u000d"
-                            } elseif (c == "b") then {
+                            } elseif {c == "b"} then {
                                 // Backspace escape
                                 accum := accum ++ "\u0008"
-                            } elseif (c == "l") then {
+                            } elseif {c == "l"} then {
                                 // LINE SEPARATOR escape
                                 accum := accum ++ "\u2028"
-                            } elseif (c == "f") then {
+                            } elseif {c == "f"} then {
                                 // Form feed/"page down" escape
                                 accum := accum ++ "\u000c"
-                            } elseif (c == "e") then {
+                            } elseif {c == "e"} then {
                                 // Escape escape
                                 accum := accum ++ "\u001b"
                             } else {
@@ -962,10 +962,10 @@ def LexerClass = object {
                                 accum := accum ++ c
                             }
                             escaped := false
-                        } elseif (c == "\\") then {
+                        } elseif {c == "\\"} then {
                             // Begin an escape sequence
                             escaped := true
-                        } elseif (unichars > 0) then {
+                        } elseif {unichars > 0} then {
                             // There are still hex digits to read for a
                             // Unicode escape. Use the current character
                             // as a hex digit and update the codepoint
@@ -978,7 +978,7 @@ def LexerClass = object {
                                 // the character in the unicode library.
                                 accum := accum ++ unicode.create(codepoint)
                             }
-                        } elseif (c == "\{") then {
+                        } elseif {c == "\{"} then {
                             if (interpString.not) then {
                                 modechange(tokens, "(", "(")
                                 interpString := true
@@ -994,7 +994,7 @@ def LexerClass = object {
                         } else {
                             accum := accum ++ c
                         }
-                    } elseif ((c == "\n") || (c == "\r")) then {
+                    } elseif {(c == "\n") || (c == "\r")} then {
                         // Linebreaks terminate any open tokens
                         modechange(tokens, mode, accum)
                         mode := "d"

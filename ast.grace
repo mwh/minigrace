@@ -616,7 +616,7 @@ class typeNode.new(name', methods') {
                     s := s ++ " | "
                 }
             }
-        } elseif (self.intersectionTypes.size > 0) then {
+        } elseif {self.intersectionTypes.size > 0} then {
             for (self.intersectionTypes.indices) do { i ->
                 s := s ++ self.intersectionTypes[i].toGrace(0)
                 if (i < self.intersectionTypes.size) then {
@@ -1358,11 +1358,11 @@ class stringNode.new(v) {
             // TODO: what escapes are missing?
             if (c == "\n") then {
                 s := s ++ "\\n"
-            } elseif (c == "\t") then {
+            } elseif {c == "\t"} then {
                 s := s ++ "\\t"
-            } elseif (c == "\"") then {
+            } elseif {c == "\""} then {
                 s := s ++ "\\\""
-            } elseif (c == "\\") then {
+            } elseif {c == "\\"} then {
                 s := s ++ "\\\\"
             } else {
                 s := s ++ c

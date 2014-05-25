@@ -85,11 +85,11 @@ method escapestring(s) {
     for (s) do {c->
         if (c == "\"") then {
             os := os ++ "\\\""
-        } elseif (c == "\\") then {
+        } elseif {c == "\\"} then {
             os := os ++ "\\\\"
-        } elseif (c == "\n") then {
+        } elseif {c == "\n"} then {
             os := os ++ "\\n"
-        } elseif ((c.ord < 32) || (c.ord > 126)) then {
+        } elseif {(c.ord < 32) || (c.ord > 126)} then {
             var uh := util.hex(c.ord)
             while {uh.size < 4} do {
                 uh := "0" ++ uh
@@ -341,19 +341,19 @@ method compileobject(o, outerRef, inheritingObject) {
     for (o.value) do { e ->
         out("sourceObject = {selfr};")
         if (e.kind == "method") then {
-        } elseif (e.kind == "vardec") then {
+        } elseif {e.kind == "vardec"} then {
             compileobjvardec(e, selfr, pos)
             out("{selfr}.mutable = true;")
             pos := pos + 1
-        } elseif (e.kind == "defdec") then {
+        } elseif {e.kind == "defdec"} then {
             compileobjdefdec(e, selfr, pos)
             pos := pos + 1
-        } elseif (e.kind == "type") then {
+        } elseif {e.kind == "type"} then {
             compileobjtype(e, selfr, pos)
             pos := pos + 1
-        } elseif (e.kind == "object") then {
+        } elseif {e.kind == "object"} then {
             compileobject(e, selfr, false)
-        } elseif (e.kind == "inherits") then {
+        } elseif {e.kind == "inherits"} then {
             def so = compilenode(e.value)
             out("{selfr}.superobj = {so};")
             out("{selfr}._value = {so}._value;")
@@ -802,7 +802,7 @@ method compileidentifier(o) {
     }
     if (name == "self") then {
         o.register := "this"
-    } elseif (name == "...") then {
+    } elseif {name == "..."} then {
         o.register := "ellipsis"
     } else {
         if (modules.contains(name)) then {
@@ -827,7 +827,7 @@ method compilebind(o) {
         usedvars.push(nm)
         out(varf(nm) ++ " = " ++ val ++ ";")
         o.register := val
-    } elseif (dest.kind == "member") then {
+    } elseif {dest.kind == "member"} then {
         if (dest.value.substringFrom(dest.value.size - 1)to(dest.value.size)
             != ":=") then {
             dest.value := dest.value ++ ":="
@@ -835,7 +835,7 @@ method compilebind(o) {
         c := ast.callNode.new(dest, [ast.callWithPart.new(dest.value, [o.value])])
         r := compilenode(c)
         o.register := r
-    } elseif (dest.kind == "index") then {
+    } elseif {dest.kind == "index"} then {
         var imem := ast.memberNode.new("[]:=", dest.value)
         c := ast.callNode.new(imem, [ast.callWithPart.new(imem.value, [dest.index, o.value])])
         r := compilenode(c)
@@ -1019,9 +1019,9 @@ method compilecall(o) {
         }
         call := call ++ ");"
         out(call)
-    } elseif ((o.value.kind == "member").andAlso {
+    } elseif {(o.value.kind == "member").andAlso {
         o.value.in.kind == "member"}.andAlso {
-            o.value.in.value == "outer"}) then {
+            o.value.in.value == "outer"}} then {
         def ot = compilenode(o.value.in)
         var call := "var call" ++ auto_count ++ " = callmethod({ot}"
             ++ ", \"" ++ escapestring(o.value.value) ++ "\", ["
@@ -1033,13 +1033,13 @@ method compilecall(o) {
         out("onOuter = true;");
         out("onSelf = true;");
         out(call)
-    } elseif ((o.value.kind == "member") && {(o.value.in.kind == "identifier")
+    } elseif {(o.value.kind == "member") && {(o.value.in.kind == "identifier")
         && (o.value.in.value == "self") && (o.value.value == "outer")}
-        ) then {
+        } then {
         out("var call{auto_count} = callmethod(superDepth, "
             ++ "\"outer\", [0]);")
-    } elseif ((o.value.kind == "member") && {(o.value.in.kind == "identifier")
-        && (o.value.in.value == "self")}) then {
+    } elseif {(o.value.kind == "member") && {(o.value.in.kind == "identifier")
+        && (o.value.in.value == "self")}} then {
         var call := "var call" ++ auto_count ++ " = callmethod(this"
             ++ ", \"" ++ escapestring(o.value.value) ++ "\", ["
         call := call ++ partl ++ "]"
@@ -1049,8 +1049,8 @@ method compilecall(o) {
         call := call ++ ");"
         out("onSelf = true;");
         out(call)
-    } elseif ((o.value.kind == "member") && {(o.value.in.kind == "identifier")
-        && (o.value.in.value == "prelude")}) then {
+    } elseif {(o.value.kind == "member") && {(o.value.in.kind == "identifier")
+        && (o.value.in.value == "prelude")}} then {
         var call := "var call" ++ auto_count ++ " = callmethod(Grace_prelude"
             ++ ",\"" ++ escapestring(o.value.value) ++ "\", ["
         call := call ++ partl ++ "]"
@@ -1059,7 +1059,7 @@ method compilecall(o) {
         }
         call := call ++ ");"
         out(call)
-    } elseif (o.value.kind == "member") then {
+    } elseif {o.value.kind == "member"} then {
         obj := compilenode(o.value.in)
         var call := "var call" ++ auto_count ++ " = callmethod(" ++ obj
             ++ ",\"" ++ escapestring(o.value.value) ++ "\", ["
@@ -1212,7 +1212,7 @@ method compilenode(o) {
         out("var bool" ++ auto_count ++ " = new GraceBoolean(" ++ o.value ++ ")")
         o.register := "bool" ++ auto_count
         auto_count := auto_count + 1
-    } elseif (o.kind == "identifier") then {
+    } elseif {o.kind == "identifier"} then {
         compileidentifier(o)
     }
     if (o.kind == "defdec") then {
@@ -1316,13 +1316,13 @@ method checkimport(nm) {
     if (io.exists("{nm}.grace")) then {
         staticmodules.add(nm)
         addTransitiveImports(nm ++ ".gct", nm)
-    } elseif (io.exists("{sys.execPath}/modules/{nm}.grace")) then {
+    } elseif {io.exists("{sys.execPath}/modules/{nm}.grace")} then {
         staticmodules.add(nm)
         addTransitiveImports("{sys.execPath}/modules/{nm}.gct", nm)
-    } elseif (io.exists("{sys.execPath}/../lib/minigrace/modules/{nm}.grace")) then {
+    } elseif {io.exists("{sys.execPath}/../lib/minigrace/modules/{nm}.grace")} then {
         staticmodules.add(nm)
         addTransitiveImports("{sys.execPath}/../lib/minigrace/modules/{nm}.gct", nm)
-    } elseif (io.exists("{sys.execPath}/{nm}.grace")) then {
+    } elseif {io.exists("{sys.execPath}/{nm}.grace")} then {
         staticmodules.add(nm)
         addTransitiveImports("{sys.execPath}/{nm}.gct", nm)
     } else {

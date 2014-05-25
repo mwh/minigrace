@@ -131,19 +131,19 @@ method findClosingBrace(tok, inserted) {
     // Skip all tokens on the same line first.
     while {(n.kind != "eof") && (n.line == tok.line)} do {
         if(n.kind == "lbrace") then { numOpening := numOpening + 1 }
-        elseif(n.kind == "rbrace") then { numClosing := numClosing + 1 }
+        elseif{n.kind == "rbrace"} then { numClosing := numClosing + 1 }
         n := n.next
     }
     // Skip all tokens that have greater indent than the target closing brace.
     while {(n.kind != "eof") && (n.indent > tok.indent)} do {
         if(n.kind == "lbrace") then { numOpening := numOpening + 1 }
-        elseif(n.kind == "rbrace") then { numClosing := numClosing + 1 }
+        elseif{n.kind == "rbrace"} then { numClosing := numClosing + 1 }
         n := n.next
     }
     if(n.kind == "rbrace") then {
         result.found := true
         result.tok := n
-    } elseif((n.prev.kind == "rbrace") && (numOpening == numClosing)) then {
+    } elseif{(n.prev.kind == "rbrace") && (numOpening == numClosing)} then {
         // Check that the number of opening and closing braces matches.
         result.found := true
         result.tok := n.prev
@@ -499,7 +499,7 @@ method block {
                         sym.line, sym.linePos)withSuggestion(suggestion)
                 }
                 next
-            } elseif (accept("semicolon")) then {
+            } elseif {accept("semicolon")} then {
                 body.push(values.pop)
                 next
                 if (accept("semicolon")) then {
@@ -508,10 +508,10 @@ method block {
                         indentFreePass := true
                     }
                 }
-            } elseif (((values.last.kind == "member")
+            } elseif {((values.last.kind == "member")
                 || (values.last.kind == "identifier")
                 || (values.last.kind == "index"))
-                && accept("bind")) then {
+                && accept("bind")} then {
                 var lhs := values.pop
                 next
                 if(didConsume({expression}).not) then {
@@ -591,20 +591,20 @@ method doif {
                 || ((t.kind == "identifier") && (t.value == "then"))) })
             if(nextTok == false) then {
                 suggestion.insert(" («expression») then \{")afterToken(btok)
-            } elseif(nextTok.kind == "rparen") then {
+            } elseif{nextTok.kind == "rparen"} then {
                 if(nextTok == sym) then {
                     suggestion.insert("(«expression»")beforeToken(sym)
                 } else {
                     suggestion.insert("(")beforeToken(sym)
                 }
-            } elseif(nextTok.kind == "lbrace") then {
+            } elseif{nextTok.kind == "lbrace"} then {
                 if(nextTok == sym) then {
                     suggestion.insert(" («expression») then")afterToken(btok)
                 } else {
                     suggestion.insert("(")beforeToken(sym)
                     suggestion.insert(") then")afterToken(nextTok.prev)andTrailingSpace(true)
                 }
-            } elseif(nextTok.kind == "identifier") then {
+            } elseif{nextTok.kind == "identifier"} then {
                 if(nextTok == sym) then {
                     suggestion.insert("(«expression») ")beforeToken(sym)
                 } else {
@@ -724,20 +724,20 @@ method doif {
                         || ((t.kind == "identifier") && (t.value == "then"))) })
                     if(nextTok == false) then {
                         suggestion.insert(" («expression») then \{")afterToken(statementToken)
-                    } elseif(nextTok.kind == "rparen") then {
+                    } elseif{nextTok.kind == "rparen"} then {
                         if(nextTok == sym) then {
                             suggestion.insert("(«expression»")beforeToken(sym)
                         } else {
                             suggestion.insert("(")beforeToken(sym)
                         }
-                    } elseif(nextTok.kind == "lbrace") then {
+                    } elseif{nextTok.kind == "lbrace"} then {
                         if(nextTok == sym) then {
                             suggestion.insert(" («expression») then")afterToken(statementToken)
                         } else {
                             suggestion.insert("(")beforeToken(sym)
                             suggestion.insert(") then")afterToken(nextTok.prev)andTrailingSpace(true)
                         }
-                    } elseif(nextTok.kind == "identifier") then {
+                    } elseif{nextTok.kind == "identifier"} then {
                         if(nextTok == sym) then {
                             suggestion.insert("(«expression») ")beforeToken(sym)
                         } else {
@@ -1107,15 +1107,15 @@ method trycatch {
                 || ((t.kind == "identifier") && (t.value == "catch")) })
             if(nextTok == false) then {
                 suggestion.insert(" \{}")afterToken(catchTok)
-            } elseif(nextTok.kind == "rbrace") then {
+            } elseif{nextTok.kind == "rbrace"} then {
                 suggestion.insert(" \{")afterToken(catchTok)
-            } elseif(nextTok.kind == "rparen") then {
+            } elseif{nextTok.kind == "rparen"} then {
                 if(nextTok == sym) then {
                     suggestion.insert("(«expression»")afterToken(lastToken)andTrailingSpace(true)
                 } else {
                     suggestion.insert("(")afterToken(lastToken)andTrailingSpace(true)
                 }
-            } elseif(nextTok.kind == "identifier") then {
+            } elseif{nextTok.kind == "identifier"} then {
                 suggestion.insert(" \{")afterToken(catchTok)
                 suggestion.insert("\} ")beforeToken(nextTok)
             }
@@ -1150,7 +1150,7 @@ method trycatch {
         next
         if (accept("lbrace")) then {
             block
-        } elseif (accept("lparen")) then {
+        } elseif {accept("lparen")} then {
             next
             if(didConsume({expression}).not) then {
                 def suggestion = errormessages.suggestion.new
@@ -1179,7 +1179,7 @@ method trycatch {
                 suggestion.insert(" }")afterToken(tokens.last)
                 suggestion.insert(" \{")afterToken(lastToken)
                 suggestions.push(suggestion)
-            } elseif(nextTok == sym) then {
+            } elseif{nextTok == sym} then {
                 suggestion.insert(" («expression»)")afterToken(lastToken)
                 suggestions.push(suggestion)
                 suggestion := errormessages.suggestion.new
@@ -1208,7 +1208,7 @@ method trycatch {
         next
         if (accept("lbrace")) then {
             block
-        } elseif (accept("lparen")) then {
+        } elseif {accept("lparen")} then {
             next
             if(didConsume({expression}).not) then {
                 def suggestion = errormessages.suggestion.new
@@ -1237,7 +1237,7 @@ method trycatch {
                 suggestion.insert(" }")afterToken(tokens.first)
                 suggestion.insert(" \{")afterToken(lastToken)
                 suggestions.push(suggestion)
-            } elseif(nextTok == sym) then {
+            } elseif{nextTok == sym} then {
                 suggestion.insert(" («expression»)")afterToken(lastToken)
                 suggestions.push(suggestion)
                 suggestion := errormessages.suggestion.new
@@ -1270,13 +1270,13 @@ method matchcase {
             || ((t.kind == "identifier") && (t.value == "case")) })
         if(nextTok == false) then {
             suggestion.insert("(«expression»)")afterToken(matchTok)
-        } elseif(nextTok.kind == "rparen") then {
+        } elseif{nextTok.kind == "rparen"} then {
             if(nextTok == sym) then {
                 suggestion.insert("(«expression»")beforeToken(sym)
             } else {
                 suggestion.insert("(")beforeToken(sym)
             }
-        } elseif(nextTok.kind == "identifier") then {
+        } elseif{nextTok.kind == "identifier"} then {
             suggestion.insert("(")beforeToken(sym)
             suggestion.insert(")")afterToken(nextTok.prev)andTrailingSpace(true)
         }
@@ -1310,7 +1310,7 @@ method matchcase {
         next
         if (accept("lbrace")) then {
             block
-        } elseif (accept("lparen")) then {
+        } elseif {accept("lparen")} then {
             next
             if(didConsume({expression}).not) then {
                 def suggestion = errormessages.suggestion.new
@@ -1339,7 +1339,7 @@ method matchcase {
                 suggestion.insert(" }")afterToken(tokens.last)
                 suggestion.insert(" \{")afterToken(lastToken)
                 suggestions.push(suggestion)
-            } elseif(nextTok == sym) then {
+            } elseif{nextTok == sym} then {
                 suggestion.insert(" («expression»)")afterToken(lastToken)
                 suggestions.push(suggestion)
                 suggestion := errormessages.suggestion.new
@@ -1359,7 +1359,7 @@ method matchcase {
         next
         if (accept("lbrace")) then {
             block
-        } elseif (accept("lparen")) then {
+        } elseif {accept("lparen")} then {
             next
             if(didConsume({expression}).not) then {
                 def suggestion = errormessages.suggestion.new
@@ -1388,7 +1388,7 @@ method matchcase {
                 suggestion.insert(" }")afterToken(tokens.first)
                 suggestion.insert(" \{")afterToken(lastToken)
                 suggestions.push(suggestion)
-            } elseif(nextTok == sym) then {
+            } elseif{nextTok == sym} then {
                 suggestion.insert(" («expression»)")afterToken(lastToken)
                 suggestions.push(suggestion)
                 suggestion := errormessages.suggestion.new
@@ -1412,25 +1412,25 @@ method matchcase {
 method term {
     if (accept("num")) then {
         pushnum
-    } elseif (accept("string")) then {
+    } elseif {accept("string")} then {
         pushstring
-    } elseif (accept("octets")) then {
+    } elseif {accept("octets")} then {
         pushoctets
-    } elseif(accept("identifier") && (sym.value == "match")) then {
+    } elseif{accept("identifier") && (sym.value == "match")} then {
         matchcase
-    } elseif(accept("identifier") && (sym.value == "try")) then {
+    } elseif{accept("identifier") && (sym.value == "try")} then {
         trycatch
-    } elseif (accept("identifier")) then {
+    } elseif {accept("identifier")} then {
         identifier
-    } elseif (accept("keyword") && (sym.value == "object")) then {
+    } elseif {accept("keyword") && (sym.value == "object")} then {
         doobject
-    } elseif (accept("keyword").andAlso { sym.value == "type" }) then {
+    } elseif {accept("keyword").andAlso { sym.value == "type" }} then {
         doanontype
-    } elseif (accept("lbrace")) then {
+    } elseif {accept("lbrace")} then {
         block
-    } elseif (accept("lsquare")) then {
+    } elseif {accept("lsquare")} then {
         doarray
-    } elseif (accept("op")) then {
+    } elseif {accept("op")} then {
         // Prefix operator
         prefixop
     }
@@ -1523,7 +1523,7 @@ method postfixsquare {
 method oprec(o) {
     if (o == "*") then {
         return 10
-    } elseif (o == "/") then {
+    } elseif {o == "/"} then {
         return 10
     }
     return 5
@@ -1694,10 +1694,10 @@ method dotrest {
             next
             if (accept("dot")) then {
                 dotrest
-            } elseif (accept("lparen") || accept("lbrace")
+            } elseif {accept("lparen") || accept("lbrace")
                 || accept("num") || accept("string") || accept("lsquare")
                 || accept("lgeneric")
-                ) then {
+                } then {
                 callrest
             }
         } else {
@@ -1886,12 +1886,12 @@ method callrest {
         }
         ln := linenum
         next
-    } elseif (don'tTakeBlock && {accept("lbrace")onLineOf(tok)}) then {
+    } elseif {don'tTakeBlock && {accept("lbrace")onLineOf(tok)}} then {
         values.push(meth)
-    } elseif (accept("string")onLineOf(tok) || accept("num")onLineOf(tok)
+    } elseif {accept("string")onLineOf(tok) || accept("num")onLineOf(tok)
         || accept("lbrace")onLineOf(tok)
         || (accept("identifier")onLineOf(tok) && ((sym.value == "true")
-                                   || (sym.value == "false")))) then {
+                                   || (sym.value == "false")))} then {
         tok := sym
         hadcall := true
         methn := meth.value
@@ -1900,9 +1900,9 @@ method callrest {
         term
         var ar := values.pop
         part.args.push(ar)
-    } elseif (meth.kind == "identifier") then {
+    } elseif {meth.kind == "identifier"} then {
         values.push(meth)
-    } elseif (meth.kind == "member") then {
+    } elseif {meth.kind == "member"} then {
         var root := meth.in
         var outroot := meth
         while {root.kind == "member"} do {
@@ -1971,7 +1971,7 @@ method callmprest(meth, signature, tok) {
                 if(methname == "while()do") then {
                     errormessages.syntaxError("A while loop must have either a loop body in braces, or a block in parentheses.")atPosition(
                         sym.line, sym.linePos)withSuggestion(suggestion)
-                } elseif(methname == "for()do") then {
+                } elseif{methname == "for()do"} then {
                     errormessages.syntaxError("A for loop must have either a loop body in braces, or a block in parentheses.")atPosition(
                         sym.line, sym.linePos)withSuggestion(suggestion)
                 }
@@ -1982,7 +1982,7 @@ method callmprest(meth, signature, tok) {
                     suggestion.insert(" \{}")afterToken(lastToken)
                     errormessages.syntaxError("A while loop must have a body.")atPosition(
                         sym.line, sym.linePos)withSuggestion(suggestion)
-                } elseif(methname == "for()do") then {
+                } elseif{methname == "for()do"} then {
                     suggestion.insert(" \{}")afterToken(lastToken)
                     errormessages.syntaxError("A for loop must have a body.")atPosition(
                         sym.line, sym.linePos)withSuggestion(suggestion)
@@ -2088,7 +2088,7 @@ method defdec {
                 && (t.value == "=") && (t.line == sym.line)})
             if(nextToken == false) then {
                 suggestion.insert(" «name» =")afterToken(lastToken)
-            } elseif(nextToken == sym) then {
+            } elseif{nextToken == sym} then {
                 suggestion.insert(" «name»")afterToken(lastToken)
             } else {
                 suggestion.replaceTokenRange(sym, nextToken.prev)leading(false)trailing(true)with("«name» ")
@@ -2120,7 +2120,7 @@ method defdec {
                     lastToken.line, lastToken.linePos + lastToken.size)withSuggestion(suggestion)
             }
             val := values.pop
-        } elseif (accept("bind")) then {
+        } elseif {accept("bind")} then {
             def suggestions = []
             var suggestion := errormessages.suggestion.new
             suggestion.replaceToken(sym)with("=")
@@ -2399,7 +2399,7 @@ method doobject {
                     errormessages.syntaxError("An object must end with a '}'.")atPosition(
                         lastToken.line, lastToken.linePos + lastToken.size)withSuggestion(suggestion)
                 }
-            } elseif ((values.size == sz) && (lastToken.kind != "semicolon")) then {
+            } elseif {(values.size == sz) && (lastToken.kind != "semicolon")} then {
                 def suggestion = errormessages.suggestion.new
                 suggestion.deleteToken(sym)
                 errormessages.syntaxError("An object can only contain variable, constant, and method declarations; and statements.")atRange(
@@ -2710,7 +2710,7 @@ method methodsignature(sameline) {
                 if(tokens.size == 0) then {
                     suggestion.replaceToken(sym)with("]({sym.value})")
                     suggestions.push(suggestion)
-                } elseif(tokens.first.line == meth.line) then {
+                } elseif{tokens.first.line == meth.line} then {
                     suggestion.replaceTokenRange(sym, tokens.first)with("]({sym.value})")
                     suggestions.push(suggestion)
                 }
@@ -2749,7 +2749,7 @@ method methodsignature(sameline) {
         next
         meth.value := meth.value ++ ":="
         part.name := part.name ++ ":="
-    } elseif (accept("op") && (meth.value == "prefix")) then {
+    } elseif {accept("op") && (meth.value == "prefix")} then {
         meth.value := meth.value ++ sym.value
         part.name := part.name ++ sym.value
         next
@@ -2832,7 +2832,7 @@ method methodsignature(sameline) {
             if (accept("comma")) then {
                 comma := sym
                 next
-            } elseif (sym.kind != "rparen") then {
+            } elseif {sym.kind != "rparen"} then {
                 if(sym.kind != "rparen") then {
                     def suggestion = errormessages.suggestion.new
                     suggestion.insert(")")afterToken(lastToken)
@@ -3101,13 +3101,13 @@ method dotype {
 method checkIndent {
     if (indentFreePass) then {
         indentFreePass := false
-    } elseif (sym.kind == "semicolon") then {
+    } elseif {sym.kind == "semicolon"} then {
         // pass
-    } elseif ((sym.kind == "rbrace") || (sym.kind == "rparen")
-        || (sym.kind == "rsquare")) then {
+    } elseif {(sym.kind == "rbrace") || (sym.kind == "rparen")
+        || (sym.kind == "rsquare")} then {
         // pass
-    } elseif (sym.kind == "eof") then {
-    } elseif (sym.indent < minIndentLevel) then {
+    } elseif {sym.kind == "eof"} then {
+    } elseif {sym.indent < minIndentLevel} then {
         if ((sym.linePos - 1) != minIndentLevel) then {
             def suggestions = []
             var suggestion := errormessages.suggestion.new
@@ -3129,7 +3129,7 @@ method checkIndent {
             errormessages.syntaxError("The indentation for this line must be at least {minIndentLevel}. This is often caused by a missing '}'.")atPosition(
                 sym.line, sym.linePos)withSuggestions(suggestions)
         }
-    } elseif (sym.indent > minIndentLevel) then {
+    } elseif {sym.indent > minIndentLevel} then {
         minIndentLevel := sym.indent
     }
 }
@@ -3146,17 +3146,17 @@ method statement {
     if (accept("keyword")) then {
         if (sym.value == "var") then {
             vardec
-        } elseif (sym.value == "def") then {
+        } elseif {sym.value == "def"} then {
             defdec
-        } elseif (sym.value == "import") then {
+        } elseif {sym.value == "import"} then {
             doimport
-        } elseif (sym.value == "dialect") then {
+        } elseif {sym.value == "dialect"} then {
             dodialect
-        } elseif (sym.value == "type") then {
+        } elseif {sym.value == "type"} then {
             dotype
-        } elseif (sym.value == "class") then {
+        } elseif {sym.value == "class"} then {
             doclass
-        } elseif (sym.value == "return") then {
+        } elseif {sym.value == "return"} then {
             doreturn
         } else {
             expression

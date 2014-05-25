@@ -78,7 +78,7 @@ method countbindings(l) {
         if ((n.kind == "vardec") || (n.kind == "defdec")
             || (n.kind == "class") || (n.kind == "type")) then {
             numslots := numslots + 1
-        } elseif (n.kind == "if") then {
+        } elseif {n.kind == "if"} then {
             numslots := numslots + countnodebindings(n)
         }
     }
@@ -161,9 +161,9 @@ method escapestring2(s) {
         if (ls && (c == "\\")) then {
             ls := false
             ns := ns ++ "\\\\"
-        } elseif (c == "\\") then {
+        } elseif {c == "\\"} then {
             ls := true
-        } elseif (ls) then {
+        } elseif {ls} then {
             ns := ns ++ "\"\"\\x" ++ c
             ls := false
             cd := 2
@@ -173,7 +173,7 @@ method escapestring2(s) {
         if (cd == 1) then {
             ns := ns ++ "\"\""
             cd := 0
-        } elseif (cd > 0) then {
+        } elseif {cd > 0} then {
             cd := cd - 1
         }
     }
@@ -248,7 +248,7 @@ method compileobjdefdecdata(o, selfr, pos) {
         if (o.value.kind == "object") then {
             compileobject(o.value, selfr)
             val := o.value.register
-        } elseif (o.value.kind == "class") then {
+        } elseif {o.value.kind == "class"} then {
             compileclass(o.value, false)
             val := o.value.register
         } else {
@@ -494,23 +494,23 @@ method compileobject(o, outerRef) {
     for (o.value) do { e ->
         if (e.kind == "method") then {
             compilemethod(e, selfr, pos)
-        } elseif (e.kind == "vardec") then {
+        } elseif {e.kind == "vardec"} then {
             out("if (objclass{myc} == NULL) \{")
             compileobjvardecmeth(e, selfr, pos)
             out("\}")
             out("{selfr}->flags |= OFLAG_MUTABLE;")
             out("adddatum2({selfr}, alloc_Undefined(), {pos});")
-        } elseif (e.kind == "defdec") then {
+        } elseif {e.kind == "defdec"} then {
             out("if (objclass{myc} == NULL) \{")
             compileobjdefdecmeth(e, selfr, pos)
             out("\}")
             out("adddatum2({selfr}, alloc_Undefined(), {pos});")
-        } elseif (e.kind == "type") then {
+        } elseif {e.kind == "type"} then {
             out("if (objclass{myc} == NULL) \{")
             compileobjtypemeth(e, selfr, pos)
             out("\}")
             out("adddatum2({selfr}, alloc_Undefined(), {pos});")
-        } elseif (e.kind == "class") then {
+        } elseif {e.kind == "class"} then {
             def cd = ast.defDecNode.new(e.name,
                 e, false)
             for (e.annotations) do {a->
@@ -538,16 +538,16 @@ method compileobject(o, outerRef) {
     for (o.value) do { e ->
         out "  sourceObject = {selfr};"
         if (e.kind == "method") then {
-        } elseif (e.kind == "vardec") then {
+        } elseif {e.kind == "vardec"} then {
             compileobjvardecdata(e, selfr, pos)
-        } elseif (e.kind == "defdec") then {
+        } elseif {e.kind == "defdec"} then {
             compileobjdefdecdata(e, selfr, pos)
-        } elseif (e.kind == "type") then {
+        } elseif {e.kind == "type"} then {
             e.anonymous := true
             def tn = compilenode(e)
             out("  adddatum2({selfr}, {tn}, {pos});")
-        } elseif (e.kind == "class") then {
-        } elseif (e.kind == "inherits") then {
+        } elseif {e.kind == "class"} then {
+        } elseif {e.kind == "inherits"} then {
             // The return value is irrelevant with factory inheritance,
             // but we save it as super for the sake of "inherits true".
             superobj := compilenode(e.value)
@@ -878,7 +878,7 @@ method compilemethod(o, selfobj, pos) {
     }
     var len := name.size + 1
     if (selfobj == false) then {
-    } elseif (closurevars.size == 0) then {
+    } elseif {closurevars.size == 0} then {
         var uo2 := "uo{myc}"
         out("  struct UserObject *{uo2} = (struct UserObject*){selfobj};")
         out("  {uo2}->data[{pos}] = emptyclosure;")
@@ -980,7 +980,7 @@ method compilefreshmethod(o, nm, body, closurevars, selfobj, pos, numslots,
     output := oldout
     var len := name.size + 1
     if (selfobj == false) then {
-    } elseif (closurevars.size == 0) then {
+    } elseif {closurevars.size == 0} then {
         out("  Method *meth_{litname} = addmethod2pos({selfobj}, \"{escapestring2(name)}\", &{litname}, {pos});")
         compilemethodtypes(litname, o)
     } else {
@@ -1142,12 +1142,12 @@ method compileidentifier(o) {
     }
     if (name == "self") then {
         o.register := "self"
-    } elseif (name == "__compilerRevision") then {
+    } elseif {name == "__compilerRevision"} then {
         out("  Object var_val___compilerRevision" ++ auto_count
             ++ " = alloc_String(compilerRevision);")
         o.register := "var_val___compilerRevision" ++ auto_count
         auto_count := auto_count + 1
-    } elseif (name == "_46__46__46_") then {
+    } elseif {name == "_46__46__46_"} then {
         out("  Object ellipsis{auto_count} = alloc_ellipsis();")
         o.register := "ellipsis{auto_count}"
         auto_count := auto_count + 1
@@ -1172,12 +1172,12 @@ method compilebind(o) {
         out("    callmethod(done, \"assignment\", 0, NULL, NULL);")
         auto_count := auto_count + 1
         o.register := val
-    } elseif (dest.kind == "member") then {
+    } elseif {dest.kind == "member"} then {
         dest.value := dest.value ++ ":="
         c := ast.callNode.new(dest, [ast.callWithPart.new(dest.value, [o.value])])
         r := compilenode(c)
         o.register := r
-    } elseif (dest.kind == "index") then {
+    } elseif {dest.kind == "index"} then {
         var imem := ast.memberNode.new("[]:=", dest.value)
         c := ast.callNode.new(imem, [ast.callWithPart.new(imem.value, [dest.index, o.value])])
         r := compilenode(c)
@@ -1413,9 +1413,9 @@ method compilecall(o) {
         out("  Object call{auto_count} = callmethod4(self, \"{evl}\", "
             ++ "{nparts}, partcv, params, ((flags >> 24) & 0xff) + 1, "
             ++ "CFLAG_SELF);")
-    } elseif ((o.value.kind == "member").andAlso {
+    } elseif {(o.value.kind == "member").andAlso {
         o.value.in.kind == "member"}.andAlso {
-            o.value.in.value == "outer"}) then {
+            o.value.in.value == "outer"}} then {
         def ot = compilenode(o.value.in)
         for (args) do { arg ->
             out("  params[{i}] = {arg};")
@@ -1426,13 +1426,13 @@ method compilecall(o) {
         }
         out("  Object call{auto_count} = callmethodflags({ot}, \"{evl}\", "
             ++ "{nparts}, partcv, params, CFLAG_SELF);")
-    } elseif ((o.value.kind == "member") && {(o.value.in.kind == "identifier")
+    } elseif {(o.value.kind == "member") && {(o.value.in.kind == "identifier")
         && (o.value.in.value == "self") && (o.value.value == "outer")}
-        ) then {
+        } then {
         out("  Object call{auto_count} = callmethod3(self, \"{evl}\", "
             ++ "0, 0, NULL, ((flags >> 24) & 0xff));")
-    } elseif ((o.value.kind == "member") && {(o.value.in.kind == "identifier")
-        && (o.value.in.value == "self")}) then {
+    } elseif {(o.value.kind == "member") && {(o.value.in.kind == "identifier")
+        && (o.value.in.value == "self")}} then {
         for (args) do { arg ->
             out("  params[{i}] = {arg};")
             i := i + 1
@@ -1442,8 +1442,8 @@ method compilecall(o) {
         }
         out("  Object call{auto_count} = callmethodflags(self, \"{evl}\", "
             ++ "{nparts}, partcv, params, CFLAG_SELF);")
-    } elseif ((o.value.kind == "member") && {(o.value.in.kind == "identifier")
-        && (o.value.in.value == "prelude")}) then {
+    } elseif {(o.value.kind == "member") && {(o.value.in.kind == "identifier")
+        && (o.value.in.value == "prelude")}} then {
         for (args) do { arg ->
             out("  params[{i}] = {arg};")
             i := i + 1
@@ -1453,7 +1453,7 @@ method compilecall(o) {
         }
         out("  Object call{auto_count} = callmethodflags(prelude, \"{evl}\", "
             ++ "{nparts}, partcv, params, CFLAG_SELF);")
-    } elseif (o.value.kind == "member") then {
+    } elseif {o.value.kind == "member"} then {
         obj := compilenode(o.value.in)
         len := o.value.value.size + 1
         for (args) do { arg ->
@@ -1640,7 +1640,7 @@ method compilenode(o) {
         out("  Object bool" ++ auto_count ++ " = alloc_Boolean({val});")
         o.register := "bool" ++ auto_count
         auto_count := auto_count + 1
-    } elseif (o.kind == "identifier") then {
+    } elseif {o.kind == "identifier"} then {
         compileidentifier(o)
     }
     if (o.kind == "defdec") then {
@@ -1956,7 +1956,7 @@ method compile(vl, of, mn, rm, bt) {
     for (values) do { v->
         if (v.kind == "vardec") then {
             nummethods := nummethods + 1
-        } elseif (v.kind == "method") then {
+        } elseif {v.kind == "method"} then {
             nummethods := nummethods + 1
             if (v.properties.contains("fresh")) then {
                 nummethods := nummethods + 1
@@ -2181,7 +2181,7 @@ method compile(vl, of, mn, rm, bt) {
                 cmd := "gcc -g -o \"{modname}\" -fPIC {exportDynamicBit} "
                     ++ "\"{modname}.gcn\" "
                     ++ "\"" ++ util.gracelibPath ++ "/gracelib.o\" "
-            } elseif(buildinfo.includepath != "") then {
+            } elseif{buildinfo.includepath != ""} then {
                 cmd := "gcc -g -o \"{modname}\" -fPIC {exportDynamicBit} "
                     ++ "\"{modname}.gcn\" "
                     ++ "\"{buildinfo.objectpath}/gracelib.o\" "
