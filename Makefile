@@ -4,9 +4,9 @@ ARCH:=$(shell uname -s)-$(shell uname -m)
 STABLE=88855bc35225a388b52f1574488df3486543f510
 all: minigrace gracepm $(OTHER_MODULES)
 
-REALSOURCEFILES = compiler.grace errormessages.grace util.grace ast.grace lexer.grace parser.grace genes.grace genc.grace mgcollections.grace interactive.grace xmodule.grace identifierresolution.grace genjson.grace
+REALSOURCEFILES = compiler.grace errormessages.grace util.grace ast.grace lexer.grace parser.grace genes.grace genjs.grace genc.grace mgcollections.grace interactive.grace xmodule.grace identifierresolution.grace genjson.grace
 SOURCEFILES = $(REALSOURCEFILES) buildinfo.grace
-JSSOURCEFILES = es/compiler.js es/errormessages.js es/ast.js es/lexer.js es/parser.js es/genes.js es/genc.js es/mgcollections.js es/xmodule.js es/identifierresolution.js es/buildinfo.js es/genjson.js
+JSSOURCEFILES = es/compiler.js es/errormessages.js es/ast.js es/lexer.js es/parser.js es/genes.js es/genjs.js es/genc.js es/mgcollections.js es/xmodule.js es/identifierresolution.js es/buildinfo.js es/genjson.js
 
 ifeq ($(MINIGRACE_BUILD_SUBPROCESSES),)
 MINIGRACE_BUILD_SUBPROCESSES = 2
