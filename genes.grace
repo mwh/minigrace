@@ -139,7 +139,7 @@ method compileobjouter(selfr, outerRef) {
     var nm := escapestring("outer")
     var nmi := escapeident("outer")
     out(selfr ++ ".outer = " ++ outerRef ++ ";")
-    out("var reader_" ++ modname ++ "_" ++ nmi ++ myc ++ " = function() \{")
+    out("var reader_" ++ modname ++ "_" ++ nmi ++ "_" ++ myc ++ " = function() \{")
     out("  return this.outer;")
     out("\}")
     out(selfr ++ ".methods[\"" ++ nm ++ "\"] = reader_" ++ modname ++
@@ -154,19 +154,19 @@ method compileobjtype(o, selfr, pos) {
     o.anonymous := true
     val := compilenode(o)
     out(selfr ++ ".data[\"" ++ nm ++ "\"] = " ++ val ++ ";")
-    out("var reader_" ++ modname ++ "_" ++ nmi ++ myc ++ " = function() \{")
+    out("var reader_" ++ modname ++ "_" ++ nmi ++ "_" ++ myc ++ " = function() \{")
     out("  return this.data[\"" ++ nm ++ "\"];")
     out("\}")
-    out("reader_{modname}_{nmi}{myc}.def = true;")
+    out("reader_{modname}_{nmi}_{myc}.def = true;")
     var isReadable := false
     for (o.annotations) do {ann->
         if ((ann.kind == "identifier").andAlso
             {ann.value == "confidential"}) then {
-            out("reader_{modname}_{nmi}{myc}.confidential = true;")
+            out("reader_{modname}_{nmi}_{myc}.confidential = true;")
         }
     }
     out(selfr ++ ".methods[\"" ++ nm ++ "\"] = reader_" ++ modname ++
-        "_" ++ nmi ++ myc ++ ";")
+        "_" ++ nmi ++ "_" ++ myc ++ ";")
 }
 method compileobjdefdec(o, selfr, pos) {
     var val := "undefined"
@@ -183,10 +183,10 @@ method compileobjdefdec(o, selfr, pos) {
     var nm := escapestring(o.name.value)
     var nmi := escapeident(o.name.value)
     out(selfr ++ ".data[\"" ++ nm ++ "\"] = " ++ val ++ ";")
-    out("var reader_" ++ modname ++ "_" ++ nmi ++ myc ++ " = function() \{")
+    out("var reader_" ++ modname ++ "_" ++ nmi ++ "_" ++ myc ++ " = function() \{")
     out("  return this.data[\"" ++ nm ++ "\"];")
     out("\}")
-    out("reader_{modname}_{nmi}{myc}.def = true;")
+    out("reader_{modname}_{nmi}_{myc}.def = true;")
     var isReadable := false
     for (o.annotations) do {ann->
         if ((ann.kind == "identifier").andAlso
@@ -199,10 +199,10 @@ method compileobjdefdec(o, selfr, pos) {
         }
     }
     if (!isReadable) then {
-        out("reader_{modname}_{nmi}{myc}.confidential = true;")
+        out("reader_{modname}_{nmi}_{myc}.confidential = true;")
     }
     out(selfr ++ ".methods[\"" ++ nm ++ "\"] = reader_" ++ modname ++
-        "_" ++ nmi ++ myc ++ ";")
+        "_" ++ nmi ++ "_" ++ myc ++ ";")
     if (ast.findAnnotation(o, "parent")) then {
         out("{selfr}.superobj = {val};")
     }
@@ -227,17 +227,17 @@ method compileobjvardec(o, selfr, pos) {
     var nm := escapestring(o.name.value)
     var nmi := escapeident(o.name.value)
     out(selfr ++ ".data[\"" ++ nm ++ "\"] = " ++ val ++ ";")
-    out("var reader_" ++ modname ++ "_" ++ nmi ++ myc ++ " = function() \{")
+    out("var reader_" ++ modname ++ "_" ++ nmi ++ "_" ++ myc ++ " = function() \{")
     out("  return this.data[\"" ++ nm ++ "\"];")
     out("\}")
     out(selfr ++ ".methods[\"" ++ nm ++ "\"] = reader_" ++ modname ++
-        "_" ++ nmi ++ myc ++ ";")
+        "_" ++ nmi ++ "_" ++ myc ++ ";")
     out(selfr ++ ".data[\"" ++ nm ++ "\"] = " ++ val ++ ";")
-    out("var writer_" ++ modname ++ "_" ++ nmi ++ myc ++ " = function(argcv, o) \{")
+    out("var writer_" ++ modname ++ "_" ++ nmi ++ "_" ++ myc ++ " = function(argcv, o) \{")
     out("  this.data[\"" ++ nm ++ "\"] = o;")
     out("\}")
     out(selfr ++ ".methods[\"" ++ nm ++ ":=\"] = writer_" ++ modname ++
-        "_" ++ nmi ++ myc ++ ";")
+        "_" ++ nmi ++ "_" ++ myc ++ ";")
     var isReadable := false
     var isWritable := false
     for (o.annotations) do {ann->
@@ -256,10 +256,10 @@ method compileobjvardec(o, selfr, pos) {
         }
     }
     if (!isReadable) then {
-        out("reader_{modname}_{nmi}{myc}.confidential = true;")
+        out("reader_{modname}_{nmi}_{myc}.confidential = true;")
     }
     if (!isWritable) then {
-        out("writer_{modname}_{nmi}{myc}.confidential = true;")
+        out("writer_{modname}_{nmi}_{myc}.confidential = true;")
     }
     if (o.dtype != false) then {
         if (val == "undefined") then {
@@ -471,7 +471,7 @@ method compilemethod(o, selfobj) {
     var myc := auto_count
     auto_count := auto_count + 1
     var name := escapestring(o.value.value)
-    var nm := name ++ myc
+    var nm := name ++ "_" ++ myc
     var closurevars := []
     var haveTypedParams := false
     for (o.signature) do { part ->
@@ -632,7 +632,7 @@ method compilefreshmethod(o, selfobj) {
     var myc := auto_count
     auto_count := auto_count + 1
     var name := escapestring(o.value.value)
-    var nm := name ++ myc
+    var nm := name ++ "_" ++ myc
     var haveTypedParams := false
     for (o.signature) do { part ->
         for (part.params) do {p->
