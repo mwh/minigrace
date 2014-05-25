@@ -143,7 +143,7 @@ method compileobjouter(selfr, outerRef) {
     out("  return this.outer;")
     out("\}")
     out(selfr ++ ".methods[\"" ++ nm ++ "\"] = reader_" ++ modname ++
-        "_" ++ nmi ++ myc ++ ";")
+        "_" ++ nmi ++ "_" ++ myc ++ ";")
 }
 method compileobjtype(o, selfr, pos) {
     var val := "undefined"
