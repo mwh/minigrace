@@ -456,39 +456,6 @@ def LexerClass = object {
                 }
                 NumToken.new(fromBase(sofar, base).asString, base)
             }
-            // True if ov is a valid identifier character. Identifier
-            // characters are Unicode letters, Unicode numbers, apostrophe,
-            // and (currently) underscore.
-            method isidentifierchar(ov) {
-                if (unicode.isLetter(ov)) then {
-                    return true
-                }
-                if (unicode.isNumber(ov)) then {
-                    return true
-                }
-                if ((ov == 95) || (ov == 39)) then {
-                    // 95 is _, 39 is '
-                    true
-                } else {
-                    false
-                }
-            }
-
-            // True if c (with codepoint ordval) is a valid operator character.
-            method isoperatorchar(c, ordval) {
-                if ((c == "-") || (c == "&") || (c == "|") || (c == ":")
-                    || (c == "%") || (c == "^") || (c == "@") || (c == "?")
-                    || (c == "*") || (c == "/") || (c == "+") || (c == "!")
-                    ) then {
-                    return true
-                }
-                if (unicode.isSymbolMathematical(ordval)) then {
-                    return true
-                } elseif {unicode.iscategory(c, "So")} then {
-                    return true
-                }
-                return false
-            }
 
             // Read the program text from util.infile and return a list of
             // tokens.
