@@ -948,7 +948,7 @@ class classNode.new(name', signature', body', superclass', constructor', dtype')
     }
     method map(blk)before(blkBefore)after(blkAfter) {
         blkBefore.apply(self)
-        var n := classNode.new(name.map(blk)before(blkBefore)after(blkAfter),
+        var n := classNode.new(name,
             listMap(signature, blk)before(blkBefore)after(blkAfter), listMap(value, blk)before(blkBefore)after(blkAfter),
             maybeMap(superclass, blk, blkBefore, blkAfter), constructor, dtype)
         for (listMap(annotations, blk)before(blkBefore)after(blkAfter)) do {a->
