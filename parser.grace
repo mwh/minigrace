@@ -5,7 +5,6 @@ import "util" as util
 import "mgcollections" as collections
 import "errormessages" as errormessages
 
-def don'tBreak = true
 var lastline := 0
 var linenum := 0
 var lastIndent := 0
