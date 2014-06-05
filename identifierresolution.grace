@@ -584,6 +584,7 @@ method resolveIdentifiers(topNode) {
             classScope.add(node.constructor.value)
             classScope.bindAs(node.name.value)
             pushScope
+            def paramScope = scope
             if (false != node.generics) then {
                 for (node.generics) do {g->
                     scope.add(g.value) as "def"
@@ -631,6 +632,22 @@ method resolveIdentifiers(topNode) {
                                     p.line, p.linePos, p.linePos + p.value.size - 1)withSuggestion(suggestion)
                             }
                         }
+                    }
+                }
+            }
+            for (node.signature) do {s->
+                for (s.params) do {p->
+                    if (scope.elements.contains(p.value)) then {
+                        def suggestion = errormessages.suggestion.new
+                        suggestion.insert("'")atPosition(p.linePos + p.value.size)onLine(p.line)
+                        var primes := "'"
+                        while { scope.elements.contains(p.value ++ primes) || paramScope.elements.contains(p.value ++ primes) } do {
+                            suggestion.insert("'")atPosition(p.linePos + p.value.size)onLine(p.line)
+                            primes := primes ++ "'"
+                        }
+                        errormessages.syntaxError("The parameter name '{p.value}' cannot be used because this class declares something named '{p.value}'.")atRange(
+                            p.line, p.linePos, p.linePos + p.value.size - 1)withSuggestion(suggestion)
+
                     }
                 }
             }
