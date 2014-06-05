@@ -2937,7 +2937,7 @@ method doimport {
         def o = ast.importNode.new(p.value, n.value)
         if (accept("colon")) then {
             next
-            dotypeterm
+            dotyperef
             o.dtype := values.pop
         }
         values.push(o)
