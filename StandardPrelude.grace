@@ -154,6 +154,18 @@ method point(x,y) {
     return point2D.x(x)y(y)
 }
 
+class aBinding.key(k)value(v) {
+    method key {k}
+    method value {v}
+    method asString { "{k}::{v}" }
+    method asDebugString { asString }
+    method hashcode { (k.hashcode * 1021) + v.hashcode }
+}
+
+method bind(k,v) {
+    return aBinding.key(k)value(v)
+}
+
 def _standardPrelude = self
 def BasicGrace = object {
     method new {
