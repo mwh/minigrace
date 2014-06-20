@@ -20,6 +20,7 @@ var braceIsType := false
 var defaultDefVisibility := "confidential"
 var defaultVarVisibility := "confidential"
 var defaultMethodVisibility := "public"
+var inMethod := false
 
 // Global object containing the current token
 var sym
@@ -2519,6 +2520,7 @@ method doclass {
 // Accept a method declaration
 method methoddec {
     if (accept("keyword") && (sym.value == "method")) then {
+        inMethod := true
         def btok = sym
         checkIndent
         var stok := sym
@@ -2947,6 +2949,10 @@ method doimport {
 // of the form "return x". x may be any expression.
 method doreturn {
     if (accept("keyword") && (sym.value == "return")) then {
+        if (!inMethod) then {
+            errormessages.syntaxError "Cannot 'return' unless inside a method."
+                atRange(sym.line, sym.linePos, sym.linePos + 5)
+        }
         next
         var retval
         if (tokenOnSameLine) then {
@@ -3351,12 +3357,16 @@ method parse(toks) {
     next
     var oldlength := tokens.size
     while {tokens.size > 0} do {
+        inMethod := false
         blank
         methoddec
+        inMethod := false
         blank
         inheritsdec
+        inMethod := false
         blank
         statement
+        inMethod := false
         if (tokens.size == oldlength) then {
             def suggestion = errormessages.suggestion.new
             suggestion.deleteToken(sym)
