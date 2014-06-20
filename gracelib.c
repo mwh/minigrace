@@ -2995,12 +2995,15 @@ Object alloc_Undefined() {
 void block_return(Object self, Object obj) {
     struct UserObject *uo = (struct UserObject*)self;
     jmp_buf *buf = uo->retpoint;
+    if (!buf)
+        gracedie("Cannot return from block at top level.");
     return_value = obj;
     longjmp(*buf, 1);
 }
 void block_savedest(Object self) {
     struct UserObject *uo = (struct UserObject*)self;
-    uo->retpoint = (void *)&return_stack[calldepth-1];
+    if (calldepth > 0)
+        uo->retpoint = (void *)&return_stack[calldepth-1];
 }
 
 Object sourceObject;
@@ -3745,8 +3748,9 @@ Object alloc_Integer32(int i) {
 Object Block_apply(Object self, int nparts, int *argcv,
         Object *args, int flags) {
     struct BlockObject *bo = (struct BlockObject*)self;
-    memcpy(return_stack[calldepth - 1], bo->retpoint,
-            sizeof(return_stack[calldepth - 1]));
+    if (bo->retpoint)
+        memcpy(return_stack[calldepth - 1], bo->retpoint,
+                sizeof(return_stack[calldepth - 1]));
     if (argcv != NULL)
         return callmethod(self, "_apply", 1, argcv, args);
     else
@@ -3826,6 +3830,7 @@ Object alloc_Block(Object self, Object(*body)(Object, int, Object*, int),
     struct BlockObject *o = (struct BlockObject*)(
             alloc_obj(sizeof(struct BlockObject) - sizeof(struct Object), c));
     o->data = glmalloc(sizeof(Object) * 3);
+    o->retpoint = NULL;
     o->super = NULL;
     o->ndata = 3;
     o->flags |= FLAG_BLOCK;
