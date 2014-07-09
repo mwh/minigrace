@@ -2489,6 +2489,7 @@ method doclass {
             minIndentLevel := statementToken.indent + 1
         }
         def body = []
+        var sz := 0
         while {(accept("rbrace")).not} do {
             ifConsume {methoddec} then {
                 body.push(values.pop)
@@ -2499,6 +2500,18 @@ method doclass {
             ifConsume {statement} then {
                 body.push(values.pop)
             }
+            if (sym.kind == "eof") then {
+                def suggestion = errormessages.suggestion.new
+                suggestion.insert("}")afterToken(lastToken)
+                errormessages.syntaxError("A class body must end with a '}'.")atPosition(
+                    lastToken.line, lastToken.linePos + lastToken.size)withSuggestion(suggestion)
+            } elseif {(body.size == sz) && (lastToken.kind != "semicolon")} then {
+                def suggestion = errormessages.suggestion.new
+                suggestion.deleteToken(sym)
+                errormessages.syntaxError("A class body can only contain variable, constant, and method declarations, and statements.")atRange(
+                    sym.line, sym.linePos, sym.linePos + sym.size - 1)withSuggestion(suggestion)
+            }
+            sz := body.size
         }
         next
         util.setline(btok.line)
@@ -2558,6 +2571,7 @@ method doconstructor {
             minIndentLevel := statementToken.indent + 1
         }
         def body = []
+        var sz := 0
         while {(accept("rbrace")).not} do {
             ifConsume {methoddec} then {
                 body.push(values.pop)
@@ -2568,6 +2582,18 @@ method doconstructor {
             ifConsume {statement} then {
                 body.push(values.pop)
             }
+            if (sym.kind == "eof") then {
+                def suggestion = errormessages.suggestion.new
+                suggestion.insert("}")afterToken(lastToken)
+                errormessages.syntaxError("A constructor body must end with a '}'.")atPosition(
+                    lastToken.line, lastToken.linePos + lastToken.size)withSuggestion(suggestion)
+            } elseif {(body.size == sz) && (lastToken.kind != "semicolon")} then {
+                def suggestion = errormessages.suggestion.new
+                suggestion.deleteToken(sym)
+                errormessages.syntaxError("A constructor body can only contain variable, constant, and method declarations, and statements.")atRange(
+                    sym.line, sym.linePos, sym.linePos + sym.size - 1)withSuggestion(suggestion)
+            }
+            sz := body.size
         }
         next
         util.setline(btok.line)
