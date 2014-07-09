@@ -404,7 +404,7 @@ method compileclass(o, includeConstant) {
     def obj = ast.objectNode.new(o.value, o.superclass)
     obj.classname := o.name.value
     var mbody := [obj]
-    var newmeth := ast.methodNode.new(o.constructor, signature, mbody, false)
+    var newmeth := ast.methodNode.new(o.constructorName, signature, mbody, false)
     if (false != o.generics) then {
         newmeth.generics := o.generics
     }

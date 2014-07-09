@@ -898,7 +898,7 @@ class callNode.new(what, with') {
         s
     }
 }
-class classNode.new(name', signature', body', superclass', constructor', dtype') {
+class classNode.new(name', signature', body', superclass', constructorName', dtype') {
     // [signature]
     //     object {
     //         name := ""
@@ -918,7 +918,7 @@ class classNode.new(name', signature', body', superclass', constructor', dtype')
     def kind = "class"
     def value = body'
     def name = name'
-    def constructor = constructor'
+    def constructorName = constructorName'
     def signature = signature'
     var dtype := dtype'
     var generics := false
@@ -929,7 +929,7 @@ class classNode.new(name', signature', body', superclass', constructor', dtype')
     method accept(visitor : ASTVisitor) {
         if (visitor.visitClass(self)) then {
             self.name.accept(visitor)
-            self.constructor.accept(visitor)
+            self.constructorName.accept(visitor)
             if (self.superclass != false) then {
                 self.superclass.accept(visitor)
             }
@@ -950,7 +950,7 @@ class classNode.new(name', signature', body', superclass', constructor', dtype')
         blkBefore.apply(self)
         var n := classNode.new(name,
             listMap(signature, blk)before(blkBefore)after(blkAfter), listMap(value, blk)before(blkBefore)after(blkAfter),
-            maybeMap(superclass, blk, blkBefore, blkAfter), constructor, dtype)
+            maybeMap(superclass, blk, blkBefore, blkAfter), constructorName, dtype)
         for (listMap(annotations, blk)before(blkBefore)after(blkAfter)) do {a->
             n.annotations.push(a.map(blk)before(blkBefore)after(blkAfter))
         }
@@ -973,7 +973,7 @@ class classNode.new(name', signature', body', superclass', constructor', dtype')
             s := s ++ "\n  " ++ spc ++ self.superclass.pretty(depth + 2)
         }
         s := s ++ "\n"
-        s := "{s}{spc}Constructor: {constructor.value}\n"
+        s := "{s}{spc}constructor: {constructorName.value}\n"
         if(false != dtype) then {
             s := "{s}{spc}Returns:\n  {spc}{dtype.pretty(depth + 2)}\n"
         }

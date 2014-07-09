@@ -2517,6 +2517,78 @@ method doclass {
     }
 }
 
+// Accept a constructor declaration
+method doconstructor {
+    if (accept("keyword") && (sym.value == "constructor")) then {
+        def btok = sym
+        next
+        def localMinIndentLevel = minIndentLevel
+        if(sym.kind != "identifier") then {
+            def suggestions = []
+            if(sym.kind == "lbrace") then {
+                var suggestion := errormessages.suggestion.new
+                suggestion.insert(" «constructor name»")afterToken(lastToken)
+                suggestions.push(suggestion)
+                suggestion := errormessages.suggestion.new
+                suggestion.replaceToken(lastToken)with("object")
+                suggestions.push(suggestion)
+            } else {
+                def suggestion = errormessages.suggestion.new
+                suggestion.insert(" «constructor name» \{}")afterToken(lastToken)
+                suggestions.push(suggestion)
+            }
+            errormessages.syntaxError("A constructor must have a name after the 'constructor'.")atPosition(
+                lastToken.line, lastToken.linePos + lastToken.size + 1)withSuggestions(suggestions)
+        }
+        var s := methodsignature(false)
+        var csig := s.sig
+        var constructorName := s.m
+        var dtype := s.rtype
+        def anns = doannotation
+        if (!accept("lbrace")) then {
+            def suggestion = errormessages.suggestion.new
+            suggestion.insert(" \{")afterToken(lastToken)
+            errormessages.syntaxError("A constructor must have a '\{' after the name.")atPosition(
+                lastToken.line, lastToken.linePos + lastToken.size + 1)withSuggestion(suggestion)
+        }
+        next
+        if (sym.line == statementToken.line) then {
+            minIndentLevel := sym.linePos - 1
+        } else {
+            minIndentLevel := statementToken.indent + 1
+        }
+        def body = []
+        while {(accept("rbrace")).not} do {
+            ifConsume {methoddec} then {
+                body.push(values.pop)
+            }
+            ifConsume {inheritsdec} then {
+                body.push(values.pop)
+            }
+            ifConsume {statement} then {
+                body.push(values.pop)
+            }
+        }
+        next
+        util.setline(btok.line)
+        def obj = ast.objectNode.new(body, false)
+        def meth = ast.methodNode.new(constructorName, csig,
+            collections.list.new(obj), dtype)
+        meth.generics := s.generics
+        if (false != anns) then {
+            meth.annotations.extend(anns)
+        } else {
+            if (defaultMethodVisibility == "confidential") then {
+                meth.annotations.push(ast.identifierNode.new("confidential",
+                    false))
+            }
+        }
+        values.push(meth)
+        minIndentLevel := localMinIndentLevel
+    }
+}
+
+
 // Accept a method declaration
 method methoddec {
     if (accept("keyword") && (sym.value == "method")) then {
@@ -3164,6 +3236,8 @@ method statement {
             dotype
         } elseif {sym.value == "class"} then {
             doclass
+        } elseif {sym.value == "constructor"} then {
+            doconstructor
         } elseif {sym.value == "return"} then {
             doreturn
         } else {

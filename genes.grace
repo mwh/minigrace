@@ -279,7 +279,7 @@ method compileclass(o) {
     util.setline(o.line)
     var signature := o.signature
     var mbody := [ast.objectNode.new(o.value, o.superclass)]
-    var newmeth := ast.methodNode.new(o.constructor, signature, mbody,
+    var newmeth := ast.methodNode.new(o.constructorName, signature, mbody,
         false)
     if (false != o.generics) then {
         newmeth.generics := o.generics

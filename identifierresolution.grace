@@ -581,7 +581,7 @@ method resolveIdentifiers(topNode) {
             checkRedefinition(node.name)
             scope.add(node.name.value) as "def"
             def classScope = Scope.new(scope)
-            classScope.add(node.constructor.value)
+            classScope.add(node.constructorName.value)
             classScope.bindAs(node.name.value)
             pushScope
             def paramScope = scope
@@ -600,7 +600,7 @@ method resolveIdentifiers(topNode) {
             }
             pushScope
             scope.variety := "class"
-            classScope.elementScopes.put(node.constructor.value, scope)
+            classScope.elementScopes.put(node.constructorName.value, scope)
             for (node.value) do {n->
                 if (n.kind == "method") then {
                     scope.add(n.value.value)

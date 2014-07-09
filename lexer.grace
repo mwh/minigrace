@@ -211,7 +211,8 @@ def LexerClass = object {
                             || (accum == "import") || (accum == "class")
                             || (accum == "return") || (accum == "def")
                             || (accum == "inherits") || (accum == "is")
-                            || (accum == "dialect")) then {
+                            || (accum == "dialect")
+                            || (accum == "constructor")) then {
                             tok := KeywordToken.new(accum)
                         }
                         tokens.push(tok)

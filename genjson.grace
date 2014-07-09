@@ -127,7 +127,7 @@ method generateNode(n) {
         } case { "class" ->
             ret.put("type", "class")
             ret.put("name", n.name.value)
-            ret.put("constructor", n.constructor.value)
+            ret.put("constructor", n.constructorName.value)
             def args = JSArray.new
             for (n.signature.at(1).params) do {p->
                 args.push(p.value)

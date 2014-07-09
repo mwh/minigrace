@@ -106,8 +106,8 @@ method generateGCT(path)fromValues(values)modules(modules) {
     for (values) do {val->
         if (val.kind == "class") then {
             gct.put("constructors-of:{val.name.value}",
-                collections.list.new(val.constructor.value))
-            gct.put("methods-of:{val.name.value}.{val.constructor.value}",
+                collections.list.new(val.constructorName.value))
+            gct.put("methods-of:{val.name.value}.{val.constructorName.value}",
                 val.data.elements)
             classes.push(val.name.value)
         }
