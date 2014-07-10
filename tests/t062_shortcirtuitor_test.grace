@@ -7,8 +7,8 @@ method falsemeth {
     false
 }
 
-print(true || {truemeth} || {truemeth})
-print(true || {falsemeth} || {truemeth})
-print(false || {truemeth} || {truemeth})
-print(false || {falsemeth} || {truemeth})
-print(false || {falsemeth})
+print(true.orElse {truemeth}.orElse {truemeth})
+print(true.orElse {falsemeth}.orElse {truemeth})
+print(false.orElse {truemeth}.orElse {truemeth})
+print(false.orElse {falsemeth}.orElse {truemeth})
+print(false.orElse {falsemeth})

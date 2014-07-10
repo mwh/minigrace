@@ -1,7 +1,10 @@
-method objcreator(x, y) {
+method objcreator(x', y') {
     object {
         method extract {
-            [x, y]
+            object {
+                def x is public = x'
+                def y is public = y'
+            }
         }
     }
 }
@@ -9,7 +12,7 @@ method objcreator(x, y) {
 def a = objcreator(3, 4)
 def b = objcreator(6, 7)
 def ae = a.extract
-print "{ae[1]} {ae[2]}"
+print "{ae.x} {ae.y}"
 def be = b.extract
-print "{be[1]} {be[2]}"
+print "{be.x} {be.y}"
 

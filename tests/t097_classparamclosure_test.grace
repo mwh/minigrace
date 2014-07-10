@@ -3,14 +3,17 @@ class ConsGood.new(hd', tl') {
     def tl = tl'
     def brand = "Cons"
     method extract {
-        return ([hd', tl'])
+        return object {
+            def x is public = hd'
+            def y is public = tl'
+        }
     }
 }
 
 def a = ConsGood.new(3, 4)
 def b = ConsGood.new(6, 7)
 def ae = a.extract
-print "{ae[1]} {ae[2]}"
+print "{ae.x} {ae.y}"
 def be = b.extract
-print "{be[1]} {be[2]}"
+print "{be.x} {be.y}"
 

@@ -7,6 +7,6 @@ method falsemeth {
     false
 }
 
-print(true && {truemeth} && {truemeth})
-print(true && {falsemeth} && {truemeth})
-print(false && {truemeth})
+print(true.andAlso {truemeth}.andAlso {truemeth})
+print(true.andAlso {falsemeth}.andAlso {truemeth})
+print(false.andAlso {truemeth})
