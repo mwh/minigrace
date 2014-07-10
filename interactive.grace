@@ -575,7 +575,7 @@ class evalVisitor.new {
 
         def obj = ast.objectNode.new(node.value, node.superclass)
         obj.classname := node.name.value
-        var newmeth := ast.methodNode.new(node.constructor, node.signature, [obj], false)
+        var newmeth := ast.methodNode.new(node.constructorName, node.signature, [obj], false)
         var cobj := ast.objectNode.new([newmeth], false)
         var con := ast.defDecNode.new(node.name, cobj, false)
         con.accept(self)
