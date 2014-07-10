@@ -116,6 +116,50 @@ GraceString.prototype = {
 };
 GraceString.prototype.methods["[]"] = GraceString.prototype.methods["at"];
 
+function GraceRange(start, end, step) {
+    this._start = start;
+    this._end = end;
+    this._step = step;
+    this._cur = start;
+}
+
+GraceRange.prototype = {
+    methods: {
+        "asString": function(argcv) {
+            return new GraceString("Range[" + this._start + ".." +
+                    this._end + ".." + this._step + "]");
+        },
+        "==": function(argcv, other) {
+            if (this == other)
+                return new GraceBoolean(true);
+            return new GraceBoolean(false);
+        },
+        "!=": function(argcv, other) {
+            var t = callmethod(this, "==", [1], other);
+            return callmethod(t, "not", [0]);
+        },
+        "..": function(argcv, newstep) {
+            var ns = newstep._value;
+            return new GraceRange(this._start, this._end, ns);
+        },
+        "havemore": function() {
+            return new GraceBoolean(this._step > 0 ? this._cur <= this._end
+                    : this._cur >= this._end);
+        },
+        "next": function() {
+            var rv = new GraceNum(this._cur);
+            this._cur += this._step;
+            return rv;
+        },
+        "iterator": function() {
+            return this;
+        },
+    },
+    className: "Range",
+    definitionModule: "unknown",
+    definitionLine: 0,
+};
+
 function GraceNum(n) {
     this._value = n;
 }
@@ -153,10 +197,7 @@ GraceNum.prototype = {
         "..": function(argcv, other) {
             var o = callmethod(other, "asString", [0]);
             var ub = parseInt(o._value);
-            var l = [];
-            for (var i=this._value; i<=ub; i++)
-                l.push(new GraceNum(i));
-            return new GraceList(l);
+            return new GraceRange(this._value, ub, 1);
         },
         "<": function(argcv, other) {
             var s = this._value < other._value;

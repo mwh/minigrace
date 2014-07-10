@@ -58,6 +58,8 @@ Object alloc_AndPattern(Object l, Object r);
 Object alloc_ExceptionPacket(Object msg, Object exception);
 Object alloc_Exception(char *name, Object parent);
 
+Object alloc_Range(int start, int end, int step);
+
 int find_resource(const char *name, char *buf);
 
 int gc_period = 100000;
@@ -116,6 +118,7 @@ ClassData GreaterThanPattern;
 ClassData LessThanPattern;
 ClassData ExceptionPacket;
 ClassData Exception;
+ClassData Range;
 
 Object Dynamic;
 Object Unknown;
@@ -147,6 +150,13 @@ struct BuiltinListObject {
     int size;
     int space;
     Object *items;
+};
+struct RangeObject {
+    OBJECT_HEADER;
+    int start;
+    int end;
+    int step;
+    int cur;
 };
 struct PrimitiveArrayObject {
     OBJECT_HEADER;
@@ -939,6 +949,62 @@ Object String_Equals(Object self, int nparts, int *argcv,
     }
     return alloc_Boolean(1);
 }
+
+Object Range_Range(Object self, int nparts, int *argcv,
+        Object *args, int flags) {
+    struct RangeObject *r = (struct RangeObject *)self;
+    int newstep = integerfromAny(args[0]);
+    return alloc_Range(r->cur, r->end, newstep);
+}
+Object Range_next(Object self, int nparts, int *argcv,
+        Object *args, int flags) {
+    struct RangeObject *r = (struct RangeObject *)self;
+    Object ret = alloc_Float64(r->cur);
+    r->cur += r->step;
+    return ret;
+}
+Object Range_havemore(Object self, int nparts, int *argcv,
+        Object *args, int flags) {
+    struct RangeObject *r = (struct RangeObject *)self;
+    if (r->step > 0 && r->cur <= r->end)
+        return alloc_Boolean(1);
+    if (r->step < 0 && r->cur >= r->end)
+        return alloc_Boolean(1);
+    return alloc_Boolean(0);
+}
+Object Range_asString(Object self, int nparts, int *argcv,
+        Object *args, int flags) {
+    struct RangeObject *r = (struct RangeObject *)self;
+    char buf[256];
+    sprintf(buf, "Range[%i..%i..%i]", r->start, r->end, r->step);
+    return alloc_String(buf);
+}
+void Range_mark(Object o) {
+}
+Object alloc_Range(int start, int end, int step) {
+    if (Range == NULL) {
+        Range = alloc_class2("Range", 5, (void*)&Range_mark);
+        add_Method(Range, "havemore", &Range_havemore);
+        add_Method(Range, "next", &Range_next);
+        add_Method(Range, "..", &Range_Range);
+        add_Method(Range, "iter", &identity_function);
+        add_Method(Range, "asString", &Range_asString);
+    }
+    if (step == 0) {
+        if (start > end)
+            step = -1;
+        else
+            step = 1;
+    }
+    Object o = alloc_obj(sizeof(struct RangeObject) - sizeof(struct Object), Range);
+    struct RangeObject *r = (struct RangeObject *)o;
+    r->start = start;
+    r->end = end;
+    r->step = step;
+    r->cur = start;
+    return o;
+}
+
 Object BuiltinListIter_next(Object self, int nparts, int *argcv,
         Object *args, int flags) {
     int *pos = (int*)self->data;
@@ -1953,17 +2019,7 @@ Object Float64_Range(Object self, int nparts, int *argcv,
     Object other = args[0];
     double a = *(double*)self->data;
     double b = *(double*)other->data;
-    int i = a;
-    int j = b;
-    gc_pause();
-    Object arr = alloc_BuiltinList();
-    int partcv[] = {1};
-    for (; i<=b; i++) {
-        Object v = alloc_Float64(i);
-        BuiltinList_push(arr, 1, partcv, &v, 0);
-    }
-    gc_unpause();
-    return (Object)arr;
+    return alloc_Range(a, b, 1);
 }
 Object Float64_Add(Object self, int nparts, int *argcv,
         Object *args, int flags) {
