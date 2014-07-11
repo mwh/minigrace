@@ -1,6 +1,6 @@
 def ClassWithPrivate = object {
   method new {
-     return (
+    return (
         object {// Private parts
            var secret := 0
            method incSecret { secret := secret + 1 }
