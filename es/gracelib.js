@@ -278,6 +278,12 @@ GraceNum.prototype = {
         "asDebugString": function(argcv) {
             return new GraceString("" + this._value);
         },
+        "prefix>": function() {
+            return new GraceComparatorPattern(">", this._value);
+        },
+        "prefix<": function() {
+            return new GraceComparatorPattern("<", this._value);
+        }
     },
     className: "Number",
     definitionModule: "unknown",
@@ -824,6 +830,34 @@ function GraceFailedMatch(result, bindings) {
     this._value = this.superobj._value;
 }
 GraceFailedMatch.prototype = GraceMatchResult.prototype;
+
+function GraceComparatorPattern(test, val) {
+    this._test = test;
+    this._value = val;
+}
+
+GraceComparatorPattern.prototype = Grace_allocObject();
+GraceComparatorPattern.prototype.className = "ComparisonPattern";
+GraceComparatorPattern.prototype.methods.match = function(argcv, o) {
+    if (this._test == "<") {
+        if (o._value < this._value)
+            return new GraceSuccessfulMatch(o);
+    } else if (this._test == ">") {
+        if (o._value > this._value)
+            return new GraceSuccessfulMatch(o);
+    }
+    return new GraceFailedMatch(o);
+};
+GraceComparatorPattern.prototype.methods["|"] = function(argcv, o) {
+    return new GraceOrPattern(this, o);
+};
+GraceComparatorPattern.prototype.methods["&"] = function(argcv, o) {
+    return new GraceOrPattern(this, o);
+};
+GraceComparatorPattern.prototype.methods.asString = function() {
+    return new GraceString("ComparisonPattern[" + this._test
+            + this._value + "]");
+}
 
 function GraceType(name) {
     this.name = name;
