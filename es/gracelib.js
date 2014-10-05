@@ -621,7 +621,7 @@ GraceAndPattern.prototype = {
             if (!Grace_isTrue(m1))
                 return m1;
             var m2 = callmethod(this._right, "match", [1], o);
-            if (!Grace_isTrue(m1))
+            if (!Grace_isTrue(m2))
                 return m2;
             var lb = callmethod(m1, "bindings", [0])._value;
             var rb = callmethod(m2, "bindings", [0])._value;
