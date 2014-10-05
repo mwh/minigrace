@@ -590,7 +590,7 @@ def LexerClass = object {
                 def operatorChar = unicode.pattern("Sm", "So",
                     "-".ord, "&".ord, "|".ord, ":".ord,
                    "%".ord, "^".ord, "@".ord, "?".ord,
-                   "*".ord, "/".ord, "+".ord, "!".ord
+                   "*".ord, "/".ord, "+".ord, "!".ord, "$".ord
                     )
                 def iGTLT = unicode.pattern("i".ord, "<".ord, ">".ord)
                 def notcp = unicode.pattern()not("c".ord, "p".ord)
