@@ -1209,7 +1209,10 @@ function gracecode_imports() {
     };
     extensions.txt.methods.loadResource = function(junk, path) {
         var req = new XMLHttpRequest();
-        req.open('GET', 'https://' + path._value, false);
+        if (path._value.indexOf('/') == -1)
+            req.open('GET', path._value, false);
+        else
+            req.open('GET', 'https://' + path._value, false);
         req.send(null);
         if (req.status == 200) {
             return new GraceString(req.responseText);
