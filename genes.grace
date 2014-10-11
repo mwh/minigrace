@@ -51,6 +51,10 @@ method formatModname(name) {
     for (name) do {c->
         if (c == "/") then {
             snm := snm ++ "$"
+        } elseif { c == "~" } then {
+            snm := snm ++ "$TILDE$"
+        } elseif { c == "." } then {
+            snm := snm ++ "$DOT$"
         } else {
             snm := snm ++ c
         }
@@ -1138,14 +1142,35 @@ method compiledialect(o) {
     }
     o.register := "undefined"
 }
+
+method isResourcePath(path) {
+    var i := path.size
+    while {i > 0} do {
+        if (path.at(i) == ".") then {
+            return true
+        }
+        if (path.at(i) == "/") then {
+            return false
+        }
+        i := i - 1
+    }
+    return false
+}
+
 method compileimport(o) {
     out("// Import of " ++ o.path)
     var nm := escapestring(o.value)
     var fn := escapestring(o.path)
-    out("if (typeof {formatModname(o.path)} == 'undefined')")
-    out "  throw new GraceExceptionPacket(RuntimeErrorObject, "
-    out "    new GraceString('could not find module {o.value}'));"
-    out("var " ++ varf(nm) ++ " = do_import(\"{fn}\", {formatModname(o.path)});")
+    if (isResourcePath(o.path)) then {
+        out "var _imports = do_import('imports', gracecode_imports);"
+        out "var {varf(nm)} = callmethod(_imports, 'loadResource', [1], "
+        out "  new GraceString(\"{fn}\"));"
+    } else {
+        out("if (typeof {formatModname(o.path)} == 'undefined')")
+        out "  throw new GraceExceptionPacket(RuntimeErrorObject, "
+        out "    new GraceString('could not find module {o.value}'));"
+        out("var " ++ varf(nm) ++ " = do_import(\"{fn}\", {formatModname(o.path)});")
+    }
     if (o.dtype != false) then {
         out "if (!Grace_isTrue(callmethod({compilenode(o.dtype)}, \"match\","
         out "  [1], {varf(nm)})))"
