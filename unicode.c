@@ -213,7 +213,7 @@ Object unicode_create(Object self, int nparts, int *argcv,
         buf[1] = 0x80;
         buf[2] = 0x80;
         buf[3] = 0x80;
-        tmp = cp >> 16;
+        tmp = cp >> 18;
         tmp &= 0x7;
         buf[0] |= tmp;
         tmp = cp >> 12;
