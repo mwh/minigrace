@@ -1538,6 +1538,21 @@ method compiledialect(o) {
     }
     o.register := "done"
 }
+
+method isResourcePath(path) {
+    var i := path.size
+    while {i > 0} do {
+        if (path.at(i) == ".") then {
+            return true
+        }
+        if (path.at(i) == "/") then {
+            return false
+        }
+        i := i - 1
+    }
+    return false
+}
+
 method compileimport(o) {
     out("// Import of {o.path} as {o.value}")
     var con
@@ -1559,10 +1574,19 @@ method compileimport(o) {
     globals.push("Object {modg};")
     importnames.put(nm, modg)
     out("  if ({modg} == NULL)")
-    if (staticmodules.contains(o.path)) then {
-        out("    {modg} = {modg}_init();")
+    if (isResourcePath(o.path)) then {
+        globals.push "Object module_imports;"
+        out "    module_imports = module_imports_init();"
+        out "    params[0] = alloc_String(\"{fn}\");"
+        out "    partcv[0] = 1;"
+        out "    {modg} = callmethod(module_imports, \"loadResource\","
+        out "        1, partcv, params);"
     } else {
-        out("    {modg} = dlmodule(\"{fn}\");")
+        if (staticmodules.contains(o.path)) then {
+            out("    {modg} = {modg}_init();")
+        } else {
+            out("    {modg} = dlmodule(\"{fn}\");")
+        }
     }
     out("  *var_{nm} = {modg};")
     globals.push("Object {modg}_init();")
@@ -1771,6 +1795,9 @@ method checkimport(nm, line, isDialect) {
     var cmd
     def argv = sys.argv
     if (staticmodules.contains(nm)) then {
+        return true
+    }
+    if (isResourcePath(nm)) then {
         return true
     }
     var locationList := collections.list.new
@@ -2002,6 +2029,7 @@ method compile(vl, of, mn, rm, bt) {
     outprint("static Object inheritingObject = NULL;")
     outprint("static const char modulename[] = \"{modname}\";");
     outprint("Object module_StandardPrelude_init();");
+    outprint("Object module_imports_init();");
     outprint("static char *originalSourceLines[] = \{")
     for (util.cLines) do {l->
         outprint("  \"{l}\",")
