@@ -1206,6 +1206,7 @@ function gracecode_sys() {
 function gracecode_imports() {
     var extensions = {
         'txt': Grace_allocObject(),
+        'png': Grace_allocObject(),
     };
     extensions.txt.methods.loadResource = function(junk, path) {
         var req = new XMLHttpRequest();
@@ -1220,6 +1221,14 @@ function gracecode_imports() {
         throw new GraceExceptionPacket(RuntimeErrorObject,
                 new GraceString("Error loading resource '" + path._value
                     + "'."));
+    };
+    extensions.png.methods.loadResource = function(junk, path) {
+        var img = document.createElement('img');
+        if (path._value.indexOf('/') == -1)
+            img.src = path._value;
+        else
+            img.src = 'https://' + path._value;
+        return wrapDOMObject(img);
     };
     this.methods.registerExtension = function(junk, ext, handler) {
         extensions[ext._value] = handler;
