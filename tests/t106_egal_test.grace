@@ -34,7 +34,10 @@ method creator {
     object {
         i := self
         def x = "test"
-        method z { g ; "hello" }
+        method z {
+                    g
+                    "hello"
+                 }
     }
 }
 var j := object {
@@ -42,15 +45,15 @@ var j := object {
 }
 
 print "Should be three trues and then all false"
-print(a==b)
-print(c==c)
-print(j==i)
-print(a==c)
-print(c==a)
-print(a==d)
-print(d==a)
-print(d==e)
-print(a==f)
-print(e==g)
-print(g==e)
-print(hmaker==hmaker)
+print(a == b)
+print(c == c)
+print(j == i)
+print(a == c)
+print(c == a)
+print(a == d)
+print(d == a)
+print(d == e)
+print(a == f)
+print(e == g)
+print(g == e)
+print(hmaker == hmaker)

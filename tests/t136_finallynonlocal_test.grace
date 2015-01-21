@@ -4,12 +4,18 @@ var count := 0
 method foo(x) {
     try (x)
         catch { e : Exception -> print "Failed; no exception was raised." }
-        finally { print "OK." ; count := count + 1}
+        finally {
+            print "OK."
+            count := count + 1
+        }
 }
 
 method bar(x) {
     try { foo(x) }
-        finally { print "OK." ; count := count + 2 }
+        finally {
+            print "OK."
+            count := count + 2
+        }
 }
 
 method baz {
