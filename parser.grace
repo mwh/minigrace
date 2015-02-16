@@ -1966,7 +1966,17 @@ method callmprest(meth, signature, tok) {
                     || (sym.value == "false")))) then {
             isTerm := true
         } else {
-            next
+            if (accept("lparen")onLineOfLastOr(tok)) then {
+                next
+            } else {
+                if ((sym.line != lastToken.line) && (sym.line != tok.line))
+                    then {
+                        errormessages.syntaxError("Every part of a multi-part method request requires an argument or arguments in (). To put that argument on the following line, indent that line.")
+                            atPosition(sym.line, sym.linePos)
+                    }
+                errormessages.syntaxError("Every part of a multi-part method request must include an argument.")
+                    atPosition(sym.line, sym.linePos)
+            }
         }
         var isEmpty := false
         if (accept "rparen") then {
