@@ -3,7 +3,7 @@ var factory
 factory := object {
     method create(n) {
         object {
-            var value := n
+            var value is readable := n
             method +(other) {
                 factory.create(self.value + other.value)
             }

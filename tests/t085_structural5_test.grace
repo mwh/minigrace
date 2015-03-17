@@ -12,16 +12,16 @@ type OuterList = {
 }
 
 def finished : Finished = object {
-    def isFinished : Boolean = true
+    def isFinished : Boolean is public = true
 }
 
 var l1  := object {
-    var data := 3
-    var next := finished
+    var data is public := 3
+    var next is public := finished
 }
 var l2 : OuterList := object {
-    def data : Number = 5
-    def next : InnerList | Finished = finished
+    def data : Number is public = 5
+    def next : InnerList | Finished is public = finished
 }
 print(l1.data)
 l1 := l2
