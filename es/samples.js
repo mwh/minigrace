@@ -98,6 +98,10 @@ var samples = {
         'dir': 'js',
         'requires': ['sniff'],
     },
+    'snake': {
+        'name': 'DOM Snake',
+        'dir': 'js',
+    },
 };
 
 window.onload = function() {

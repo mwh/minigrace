@@ -126,6 +126,13 @@
         "requires": [],
         "description": "Pong implemented on top of the HTML document object model directly."
     },
+    "snake": {
+        "name": "DOM Snake",
+        "dir": "js",
+        "categories": ["Graphics"],
+        "requires": [],
+        "description": "Snake implemented on top of the HTML document object model directly."
+    },
     "sniff": {
         "name": "Sniff graphics dialect",
         "dir": "js",
