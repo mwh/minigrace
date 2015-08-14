@@ -584,7 +584,9 @@ method compilemethod(o, selfobj) {
     if (debugMode) then {
         out "stackFrames.pop();"
     }
-    out("return " ++ ret)
+    if (ret != "undefined") then {
+        out("return " ++ ret)
+    }
     decreaseindent
     out("\} catch(e) \{")
     if (debugMode) then {
@@ -702,7 +704,9 @@ method compilefreshmethod(o, selfobj) {
     if (false != tailObject) then {
         o.body.push(tailObject)
     }
-    out("return " ++ ret)
+    if (ret != "undefined") then {
+        out("return " ++ ret)
+    }
     decreaseindent
     out("\} catch(e) \{")
     out("  if ((e.exctype == 'return') && (e.target == returnTarget)) \{")
