@@ -783,7 +783,9 @@ method compileif(o) {
     for (o.thenblock) do { l->
         tret := compilenode(l)
     }
-    out("if" ++ myc ++ " = " ++ tret ++ ";")
+    if (tret != "undefined") then {
+        out("if" ++ myc ++ " = " ++ tret ++ ";")
+    }
     decreaseindent
     if (o.elseblock.size > 0) then {
         out("\} else \{")
@@ -791,7 +793,9 @@ method compileif(o) {
         for (o.elseblock) do { l->
             fret := compilenode(l)
         }
-        out("if" ++ myc ++ " = " ++ fret ++ ";")
+        if (fret != "undefined") then {
+            out("if" ++ myc ++ " = " ++ fret ++ ";")
+        }
         decreaseindent
     }
     out("\}")
